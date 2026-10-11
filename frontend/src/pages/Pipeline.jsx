@@ -8,7 +8,7 @@ import { LIVE_CAMPAIGN_STATUSES } from "../lib/constants";
 import { formatWhen } from "../lib/format";
 import { api } from "../lib/api";
 
-const STAGE_TONE = ["#f0b429", "#e5a623", "#4ade80", "#4ade80", "#4ade80"];
+const STAGE_TONE = ["#0D9488", "#0F766E", "#4ade80", "#4ade80", "#4ade80"];
 
 const EVENT_STYLE = {
   outreach_sent: ["sent", "text-sky-300"],
@@ -525,7 +525,7 @@ function Funnel({ stages, total }) {
                 className="h-full rounded-full transition-all duration-700"
                 style={{
                   width: `${Math.max(stage.rate * 100, stage.count ? 2 : 0)}%`,
-                  background: STAGE_TONE[index] ?? "#f0b429",
+                  background: STAGE_TONE[index] ?? "#0D9488",
                   opacity: stage.count ? 1 : 0.3,
                 }}
               />

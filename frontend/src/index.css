@@ -1,75 +1,61 @@
+@import "./doaide-theme.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 /*
-  DoAide AutoApply UI — editorial-technical.
-
-  Near-black canvas, hairline borders instead of cards-with-shadows, one amber
-  accent used only for the thing you should look at next. Data is monospace,
-  numerals are serif. Nothing shouts except the signal.
+  DoAide AutoApply UI — unified teal branding.
+  Light default, dark via .dark class, teal accent.
 */
 
 @layer base {
-  :root {
-    --hairline: rgba(255, 255, 255, 0.07);
-    --hairline-strong: rgba(255, 255, 255, 0.12);
-  }
-
   html {
+    color-scheme: light;
+  }
+  .dark html, html.dark {
     color-scheme: dark;
   }
 
   body {
-    @apply bg-ink-900 font-sans text-[15px] text-white/80 antialiased;
-    /* A barely-there grain so the flat black has some tooth. */
-    background-image:
-      radial-gradient(
-        ellipse 80% 50% at 50% -10%,
-        rgba(240, 180, 41, 0.06),
-        transparent 70%
-      ),
-      url("data:image/svg+xml,%3Csvg viewBox='0 0 240 240' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.022'/%3E%3C/svg%3E");
-    background-attachment: fixed;
+    @apply bg-canvas font-sans text-[15px] text-ink-700 antialiased;
   }
 
   ::selection {
-    @apply bg-signal/25 text-white;
+    @apply bg-brand-500/25 text-ink-900;
   }
 
-  /* Slim, unobtrusive scrollbars — the table is dense enough already. */
   ::-webkit-scrollbar {
     width: 10px;
     height: 10px;
   }
   ::-webkit-scrollbar-thumb {
-    @apply rounded-full border-4 border-transparent bg-white/10 bg-clip-padding;
+    @apply rounded-full border-4 border-transparent bg-ink-400/20 bg-clip-padding;
   }
   ::-webkit-scrollbar-thumb:hover {
-    @apply bg-white/20;
+    @apply bg-ink-400/40;
   }
 
   :focus-visible {
-    @apply outline-none ring-2 ring-signal/60 ring-offset-2 ring-offset-ink-900;
+    @apply outline-none ring-2 ring-brand-500/60 ring-offset-2 ring-offset-canvas;
   }
 }
 
 @layer components {
   /* ---- Surfaces ---- */
   .panel {
-    @apply rounded-xl border bg-ink-800/80 backdrop-blur-sm;
-    border-color: var(--hairline);
+    @apply rounded-xl border border-line bg-canvas shadow-card;
   }
   .hairline {
-    border-color: var(--hairline);
+    border-color: rgb(var(--c-line));
   }
 
   /* ---- Type ---- */
   .eyebrow {
-    @apply font-mono text-[10px] uppercase tracking-[0.18em] text-white/35;
+    @apply font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400;
   }
   .stat-figure {
-    @apply font-display text-5xl leading-none tracking-tightest text-white;
+    @apply font-display text-5xl leading-none tracking-tightest text-ink-900;
     font-variant-numeric: tabular-nums;
   }
 
@@ -80,42 +66,36 @@
            disabled:pointer-events-none disabled:opacity-40;
   }
   .btn-primary {
-    @apply btn bg-signal text-ink-900 hover:bg-signal-soft active:scale-[0.985];
+    @apply btn bg-brand-500 text-white hover:bg-brand-600 active:scale-[0.985];
   }
   .btn-ghost {
-    @apply btn border bg-transparent text-white/70 hover:border-white/20
-           hover:bg-white/[0.04] hover:text-white active:scale-[0.985];
-    border-color: var(--hairline-strong);
+    @apply btn border border-line bg-transparent text-ink-700 hover:border-line-strong
+           hover:bg-paper hover:text-ink-900 active:scale-[0.985];
   }
   .btn-quiet {
-    @apply btn px-2.5 py-1.5 text-xs text-white/45 hover:bg-white/5 hover:text-white/80;
+    @apply btn px-2.5 py-1.5 text-xs text-ink-500 hover:bg-paper hover:text-ink-900;
   }
   .btn-danger {
-    @apply btn bg-bad/90 text-ink-900 hover:bg-bad active:scale-[0.985];
+    @apply btn bg-bad/90 text-white hover:bg-bad active:scale-[0.985];
   }
 
   .input {
-    @apply w-full rounded-lg border bg-ink-900/60 px-3.5 py-2.5 text-sm text-white
-           placeholder:text-white/25 focus:border-signal/50 focus:outline-none
+    @apply w-full rounded-lg border border-line bg-canvas px-3.5 py-2.5 text-sm text-ink-900
+           placeholder:text-ink-400 focus:border-brand-500/50 focus:outline-none
            focus:ring-0;
-    border-color: var(--hairline-strong);
   }
-  /* A field the setup wizard pre-filled from the resume. Tinted, not shouted:
-     the point is to show what to review, not to decorate the form. Declared
-     after .input so it wins the border-color it overrides. */
   .input-suggested {
-    @apply bg-signal/[0.04];
-    border-color: rgba(240, 180, 41, 0.35);
+    @apply bg-brand-50;
+    border-color: rgba(13, 148, 136, 0.35);
   }
   .label {
-    @apply mb-2 block font-mono text-[10px] uppercase tracking-[0.18em] text-white/35;
+    @apply mb-2 block font-mono text-[10px] uppercase tracking-[0.18em] text-ink-400;
   }
 
   /* ---- Data ---- */
   .chip {
-    @apply inline-flex items-center gap-1.5 rounded-md border bg-white/[0.03] px-2
-           py-1 font-mono text-[11px] text-white/70;
-    border-color: var(--hairline-strong);
+    @apply inline-flex items-center gap-1.5 rounded-md border border-line bg-paper px-2
+           py-1 font-mono text-[11px] text-ink-700;
   }
   .badge {
     @apply inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5
@@ -127,7 +107,6 @@
 }
 
 @layer utilities {
-  /* Staggered entrance — set on a container's children via nth-child delays. */
   .stagger > * {
     animation: fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
   }
@@ -148,27 +127,35 @@
   }
 }
 
-/* ── DoAide 409A Split Landing Page ── */
+/* ── Landing Page ── */
 
 .landing-root {
-  --accent: #F0B429;
-  --accent-dark: #D4A017;
-  --accent-soft: #F7CC5F;
-  --bg: rgb(10, 10, 11);
-  --bg-card: rgba(16, 16, 18, 0.8);
-  --text: #E4E4E7;
-  --text-muted: #71717A;
+  --accent: #0D9488;
+  --accent-dark: #0F766E;
+  --accent-soft: #2DD4BF;
+  --bg: #FFFFFF;
+  --bg-card: #F9FAFB;
+  --text: #111827;
+  --text-muted: #6B7280;
   min-height: 100vh;
   background: var(--bg);
   color: var(--text);
-  font-family: 'Schibsted Grotesk', system-ui, -apple-system, sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   overflow-x: hidden;
   position: relative;
   display: flex;
   flex-direction: column;
 }
 
-/* ── Particle Background ── */
+.dark .landing-root {
+  --bg: #0A0A0B;
+  --bg-card: rgba(16, 16, 18, 0.8);
+  --text: #E5E7EB;
+  --text-muted: #6B7280;
+  --accent-soft: #5EEAD4;
+}
+
+/* ── Particles ── */
 .landing-particles {
   position: fixed;
   inset: 0;
@@ -208,8 +195,8 @@
 }
 
 @keyframes landing-pipeline-pulse {
-  0%, 100% { stroke: rgba(240, 180, 41, 0.2); }
-  50% { stroke: rgba(240, 180, 41, 0.4); }
+  0%, 100% { stroke: rgba(13, 148, 136, 0.2); }
+  50% { stroke: rgba(13, 148, 136, 0.4); }
 }
 
 /* ── Pipeline Visualization ── */
@@ -231,7 +218,7 @@
 }
 
 .landing-pipeline-node:hover {
-  stroke: rgba(240, 180, 41, 0.5);
+  stroke: rgba(13, 148, 136, 0.5);
 }
 
 /* ── Header ── */
@@ -261,15 +248,15 @@
 }
 
 .landing-brand-text {
-  font-family: 'Instrument Serif', Georgia, serif;
-  font-size: 24px;
-  font-weight: 400;
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
   letter-spacing: -0.3px;
 }
 
 .landing-brand-text em {
   color: var(--accent);
-  font-style: italic;
+  font-style: normal;
 }
 
 /* ── Split Layout ── */
@@ -307,22 +294,11 @@
   width: 400px;
 }
 
-/* ── Hero Robot ── */
-.landing-hero-robot-wrap {
-  margin-bottom: 32px;
-  animation: landing-float 4s ease-in-out infinite;
-  filter: drop-shadow(0 0 40px rgba(240, 180, 41, 0.25));
-}
-
-.landing-hero-robot .landing-antenna-glow {
-  animation: landing-pulse-glow 2s ease-in-out infinite;
-}
-
 /* ── Headline ── */
 .landing-headline {
-  font-family: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  font-family: 'Inter', system-ui, sans-serif;
   font-size: clamp(36px, 5vw, 56px);
-  font-weight: 400;
+  font-weight: 800;
   line-height: 1.1;
   letter-spacing: -0.5px;
   color: var(--text);
@@ -331,7 +307,7 @@
 
 .landing-headline em {
   color: var(--accent);
-  font-style: italic;
+  font-style: normal;
 }
 
 /* ── Subtitle ── */
@@ -373,9 +349,12 @@
 /* ── Auth Card ── */
 .landing-auth {
   background: var(--bg-card);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--da-border);
   border-radius: 24px;
   padding: 32px;
+}
+
+.dark .landing-auth {
   backdrop-filter: blur(20px);
 }
 
@@ -384,9 +363,9 @@
   gap: 4px;
   padding: 4px;
   margin-bottom: 24px;
-  background: rgba(255, 255, 255, 0.04);
+  background: var(--da-surface);
   border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--da-border);
 }
 
 .landing-auth-tab {
@@ -400,7 +379,7 @@
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s;
-  font-family: 'Schibsted Grotesk', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 .landing-auth-tab:hover {
@@ -409,8 +388,8 @@
 
 .landing-auth-tab-active {
   background: var(--accent);
-  color: #0A0A0B;
-  box-shadow: 0 2px 8px rgba(240, 180, 41, 0.3);
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(13, 148, 136, 0.3);
 }
 
 .landing-auth-form {
@@ -431,29 +410,29 @@
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  font-family: 'Schibsted Grotesk', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
 }
 
 .landing-auth-input {
   width: 100%;
   padding: 12px 16px;
-  background: rgba(10, 10, 11, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--da-bg);
+  border: 1px solid var(--da-border);
   border-radius: 12px;
   color: var(--text);
   font-size: 14px;
-  font-family: 'Schibsted Grotesk', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   outline: none;
   transition: border-color 0.2s;
 }
 
 .landing-auth-input::placeholder {
-  color: rgba(255, 255, 255, 0.2);
+  color: var(--da-text-muted);
 }
 
 .landing-auth-input:focus {
-  border-color: rgba(240, 180, 41, 0.5);
-  box-shadow: 0 0 0 3px rgba(240, 180, 41, 0.1);
+  border-color: rgba(13, 148, 136, 0.5);
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
 }
 
 .landing-auth-error {
@@ -461,9 +440,13 @@
   background: rgba(248, 113, 113, 0.1);
   border: 1px solid rgba(248, 113, 113, 0.2);
   border-radius: 10px;
-  color: #f87171;
+  color: #DC2626;
   font-size: 13px;
   margin: 0;
+}
+
+.dark .landing-auth-error {
+  color: #f87171;
 }
 
 .landing-btn-primary {
@@ -472,11 +455,11 @@
   justify-content: center;
   padding: 8px 20px;
   background: var(--accent);
-  color: #0A0A0B;
+  color: #FFFFFF;
   border-radius: 12px;
   font-weight: 600;
   font-size: 14px;
-  font-family: 'Schibsted Grotesk', system-ui, sans-serif;
+  font-family: 'Inter', system-ui, sans-serif;
   text-decoration: none;
   transition: all 0.2s ease;
   border: none;
@@ -486,7 +469,7 @@
 .landing-btn-primary:hover {
   background: var(--accent-dark);
   transform: translateY(-1px);
-  box-shadow: 0 4px 20px rgba(240, 180, 41, 0.3);
+  box-shadow: 0 4px 20px rgba(13, 148, 136, 0.3);
 }
 
 .landing-btn-primary:disabled {
@@ -518,7 +501,7 @@
   content: "";
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: var(--da-border);
 }
 
 .landing-sso-buttons {
@@ -534,9 +517,9 @@
   gap: 8px;
   padding: 10px 12px;
   border-radius: 8px;
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  background: rgba(255, 255, 255, 0.04);
-  color: var(--text-secondary);
+  border: 1px solid var(--da-border);
+  background: var(--da-bg);
+  color: var(--text-muted);
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
@@ -544,9 +527,9 @@
   cursor: pointer;
 }
 .landing-sso-btn:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.2);
-  color: var(--text-primary);
+  background: var(--da-surface-hover);
+  border-color: var(--da-border-light);
+  color: var(--text);
 }
 
 .landing-auth-hint {
@@ -562,7 +545,7 @@
   z-index: 5;
   margin-top: auto;
   padding: 32px 40px 24px;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  border-top: 1px solid var(--da-border);
 }
 
 .landing-footer-products {
@@ -736,7 +719,6 @@
 /* ── Reduced Motion ── */
 @media (prefers-reduced-motion: reduce) {
   .landing-hero-robot-wrap,
-  .landing-hero-robot .landing-antenna-glow,
   .landing-typewriter-cursor {
     animation: none !important;
   }

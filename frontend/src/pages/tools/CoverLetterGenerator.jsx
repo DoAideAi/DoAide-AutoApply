@@ -70,46 +70,43 @@ export default function CoverLetterGenerator() {
   return (
     <PublicLayout title="Free Cover Letter Generator" jsonLd={jsonLd}>
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2">Cover Letter Generator</h1>
-        <p className="text-zinc-400 mb-6">Fill in the details below to generate a professional cover letter instantly.</p>
+        <h1 className="text-3xl font-bold text-ink-900 mb-2">Cover Letter Generator</h1>
+        <p className="text-ink-500 mb-6">Fill in the details below to generate a professional cover letter instantly.</p>
 
         <form onSubmit={handleGenerate} className="space-y-4 mb-6">
           {fields.map((f) => (
             <div key={f.key}>
-              <label className="block text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">{f.label}</label>
+              <label className="block text-xs text-ink-500 mb-1.5 uppercase tracking-wider">{f.label}</label>
               <input
                 type={f.type}
                 value={form[f.key]}
                 onChange={(e) => update(f.key, e.target.value)}
                 required={f.required}
                 placeholder={f.placeholder}
-                className="w-full rounded-lg px-3 py-2.5 text-sm border-0 focus:outline-none focus:ring-2"
-                style={{ background: "rgba(255,255,255,0.06)", color: "#E4E4E7", "--tw-ring-color": "rgba(240,180,41,0.3)" }}
+                className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
               />
             </div>
           ))}
           <button
             type="submit"
-            className="rounded-lg px-6 py-2.5 font-medium cursor-pointer border-0"
-            style={{ background: "#F0B429", color: "#0A0A0B" }}
+            className="btn-primary cursor-pointer"
           >
             Generate Cover Letter
           </button>
         </form>
 
         {letter && (
-          <div className="rounded-xl p-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="rounded-xl border border-line bg-paper p-6">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-semibold text-white">Your Cover Letter</h2>
+              <h2 className="text-lg font-semibold text-ink-900">Your Cover Letter</h2>
               <button
                 onClick={copyLetter}
-                className="rounded-lg px-4 py-1.5 text-xs font-medium cursor-pointer border-0"
-                style={{ background: "rgba(240,180,41,0.15)", color: "#F0B429" }}
+                className="rounded-lg bg-brand-50 px-4 py-1.5 text-xs font-medium text-brand-500 cursor-pointer border-0"
               >
                 {copied ? "Copied!" : "Copy to Clipboard"}
               </button>
             </div>
-            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-zinc-300 font-sans">{letter}</pre>
+            <pre className="whitespace-pre-wrap text-sm leading-relaxed text-ink-700 font-sans">{letter}</pre>
           </div>
         )}
 

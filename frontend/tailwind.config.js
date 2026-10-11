@@ -1,56 +1,64 @@
 /** @type {import('tailwindcss').Config} */
 export default {
+  darkMode: "class",
   content: ["./index.html", "./src/**/*.{js,jsx}"],
   theme: {
     extend: {
       fontFamily: {
-        // Editorial serif for numerals and the wordmark; grotesk for UI; mono
-        // for anything that is data (addresses, statuses, counts).
-        display: ['"Instrument Serif"', "Georgia", "serif"],
-        sans: ['"Schibsted Grotesk"', "ui-sans-serif", "system-ui", "sans-serif"],
+        sans: ['"Inter"', "system-ui", "-apple-system", "sans-serif"],
         mono: ['"IBM Plex Mono"', "ui-monospace", "SFMono-Regular", "monospace"],
+        display: ['"Instrument Serif"', "Georgia", "serif"],
       },
       colors: {
-        // Near-black canvas with three elevation steps above it.
+        canvas: "rgb(var(--c-canvas) / <alpha-value>)",
+        paper: "rgb(var(--c-paper) / <alpha-value>)",
         ink: {
-          900: "#0a0a0b",
-          800: "#101012",
-          700: "#16161a",
-          600: "#1d1d22",
+          900: "rgb(var(--c-ink-900) / <alpha-value>)",
+          700: "rgb(var(--c-ink-700) / <alpha-value>)",
+          500: "rgb(var(--c-ink-500) / <alpha-value>)",
+          400: "rgb(var(--c-ink-400) / <alpha-value>)",
         },
-        // The single accent. TalentPing pings — this is the signal.
+        line: {
+          DEFAULT: "rgb(var(--c-line) / <alpha-value>)",
+          strong: "rgb(var(--c-line-strong) / <alpha-value>)",
+        },
+        brand: {
+          50: "rgba(13, 148, 136, 0.1)",
+          100: "rgba(13, 148, 136, 0.15)",
+          300: "rgb(var(--c-brand-300) / <alpha-value>)",
+          500: "rgb(var(--c-brand-500) / <alpha-value>)",
+          600: "rgb(var(--c-brand-600) / <alpha-value>)",
+          700: "rgb(var(--c-brand-700) / <alpha-value>)",
+        },
         signal: {
-          DEFAULT: "#f0b429",
-          soft: "#f7d070",
-          dim: "#a87c1c",
+          DEFAULT: "rgb(var(--c-brand-500) / <alpha-value>)",
+          soft: "rgb(var(--c-brand-300) / <alpha-value>)",
         },
-        good: "#4ade80",
-        warn: "#fb923c",
-        bad: "#f87171",
+        good: "#34D399",
+        "good-wash": "rgba(52, 211, 153, 0.1)",
+        warn: "#FBBF24",
+        "warn-wash": "rgba(251, 191, 36, 0.1)",
+        bad: "#F87171",
+        "bad-wash": "rgba(248, 113, 113, 0.1)",
       },
       letterSpacing: {
         tightest: "-0.04em",
       },
       boxShadow: {
-        lift: "0 1px 0 0 rgba(255,255,255,0.04) inset, 0 8px 24px -12px rgba(0,0,0,0.9)",
-        glow: "0 0 0 1px rgba(240,180,41,0.3), 0 0 32px -8px rgba(240,180,41,0.35)",
+        card: "var(--shadow-card)",
+        lift: "var(--shadow-lift)",
+        pop: "var(--shadow-pop)",
+        brand: "0 0 20px rgba(13, 148, 136, 0.15)",
       },
       keyframes: {
         "fade-up": {
-          from: { opacity: "0", transform: "translateY(8px)" },
+          from: { opacity: "0", transform: "translateY(6px)" },
           to: { opacity: "1", transform: "translateY(0)" },
         },
-        "ping-ring": {
-          "0%": { transform: "scale(1)", opacity: "0.5" },
-          "70%, 100%": { transform: "scale(2.4)", opacity: "0" },
-        },
-        shimmer: {
-          "100%": { transform: "translateX(100%)" },
-        },
+        shimmer: { "100%": { transform: "translateX(100%)" } },
       },
       animation: {
-        "fade-up": "fade-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) both",
-        "ping-ring": "ping-ring 2.4s cubic-bezier(0, 0, 0.2, 1) infinite",
+        "fade-up": "fade-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) both",
         shimmer: "shimmer 1.8s infinite",
       },
     },

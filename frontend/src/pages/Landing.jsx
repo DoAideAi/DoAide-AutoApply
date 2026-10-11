@@ -3,49 +3,7 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import DoAideFooter from "../components/DoAideFooter";
 
-/* ---------- robot SVGs from DoAide template ---------- */
-
-function RobotFace({ size = 32, color = "#F0B429" }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" width={size} height={size}>
-      <line x1="16" y1="6" x2="16" y2="2" stroke={color} strokeWidth="1.5" strokeLinecap="round" />
-      <circle cx="16" cy="1.5" r="1.5" fill={color} />
-      <rect x="5" y="6" width="22" height="17" rx="5" fill={color} />
-      <ellipse cx="11" cy="13" rx="2.5" ry="3" fill="#0A0A0B" />
-      <ellipse cx="21" cy="13" rx="2.5" ry="3" fill="#0A0A0B" />
-      <circle cx="11.5" cy="12.5" r="1" fill={color} opacity="0.6" />
-      <circle cx="21.5" cy="12.5" r="1" fill={color} opacity="0.6" />
-      <path d="M12 19Q16 22 20 19" stroke="#0A0A0B" strokeWidth="1.2" fill="none" strokeLinecap="round" />
-      <rect x="1" y="10" width="4" height="5" rx="2" fill={color} opacity="0.8" />
-      <rect x="27" y="10" width="4" height="5" rx="2" fill={color} opacity="0.8" />
-    </svg>
-  );
-}
-
-function HeroRobot({ color = "#F0B429" }) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 180" width="200" height="180" className="landing-hero-robot">
-      <line x1="100" y1="30" x2="100" y2="10" stroke={color} strokeWidth="3" strokeLinecap="round" />
-      <circle cx="100" cy="7" r="5" fill={color} className="landing-antenna-glow" />
-      <rect x="40" y="30" width="120" height="90" rx="24" fill={color} />
-      <ellipse cx="70" cy="68" rx="14" ry="17" fill="#0A0A0B" />
-      <ellipse cx="130" cy="68" rx="14" ry="17" fill="#0A0A0B" />
-      <circle cx="73" cy="64" r="5" fill={color} opacity="0.5" />
-      <circle cx="133" cy="64" r="5" fill={color} opacity="0.5" />
-      <path d="M75 100 Q100 118 125 100" stroke="#0A0A0B" strokeWidth="3.5" fill="none" strokeLinecap="round" />
-      <rect x="8" y="50" width="26" height="30" rx="10" fill={color} opacity="0.8" />
-      <rect x="166" y="50" width="26" height="30" rx="10" fill={color} opacity="0.8" />
-      <rect x="55" y="125" width="90" height="30" rx="10" fill={color} opacity="0.9" />
-      <rect x="65" y="158" width="12" height="18" rx="5" fill={color} opacity="0.7" />
-      <rect x="123" y="158" width="12" height="18" rx="5" fill={color} opacity="0.7" />
-    </svg>
-  );
-}
-
-/* ---------- config ---------- */
-
-const ACCENT = "#F0B429";
-const ACCENT_DARK = "#D4A017";
+const ACCENT = "#0D9488";
 
 const TYPEWRITER_PHRASES = [
   "Smart job matching",
@@ -92,7 +50,7 @@ function Particles() {
         r: Math.random() * 2 + 0.5,
         dx: (Math.random() - 0.5) * 0.3,
         dy: (Math.random() - 0.5) * 0.3,
-        opacity: Math.random() * 0.4 + 0.1,
+        opacity: Math.random() * 0.3 + 0.05,
       });
     }
 
@@ -107,7 +65,7 @@ function Particles() {
         if (p.y > canvas.height) p.y = 0;
         ctx.beginPath();
         ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(240, 180, 41, ${p.opacity})`;
+        ctx.fillStyle = `rgba(13, 148, 136, ${p.opacity})`;
         ctx.fill();
       }
       animId = requestAnimationFrame(draw);
@@ -130,8 +88,8 @@ const PIPELINE_STAGES = [
     label: "Search",
     icon: (
       <>
-        <circle cx="12" cy="11" r="5" stroke="#F0B429" strokeWidth="1.8" fill="none" />
-        <line x1="15.5" y1="14.5" x2="20" y2="19" stroke="#F0B429" strokeWidth="1.8" strokeLinecap="round" />
+        <circle cx="12" cy="11" r="5" stroke={ACCENT} strokeWidth="1.8" fill="none" />
+        <line x1="15.5" y1="14.5" x2="20" y2="19" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" />
       </>
     ),
   },
@@ -139,12 +97,12 @@ const PIPELINE_STAGES = [
     label: "Match",
     icon: (
       <>
-        <circle cx="12" cy="12" r="4" stroke="#F0B429" strokeWidth="1.8" fill="none" />
-        <circle cx="12" cy="12" r="1.5" fill="#F0B429" />
-        <line x1="12" y1="4" x2="12" y2="6" stroke="#F0B429" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="12" y1="18" x2="12" y2="20" stroke="#F0B429" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="4" y1="12" x2="6" y2="12" stroke="#F0B429" strokeWidth="1.2" strokeLinecap="round" />
-        <line x1="18" y1="12" x2="20" y2="12" stroke="#F0B429" strokeWidth="1.2" strokeLinecap="round" />
+        <circle cx="12" cy="12" r="4" stroke={ACCENT} strokeWidth="1.8" fill="none" />
+        <circle cx="12" cy="12" r="1.5" fill={ACCENT} />
+        <line x1="12" y1="4" x2="12" y2="6" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="12" y1="18" x2="12" y2="20" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="4" y1="12" x2="6" y2="12" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" />
+        <line x1="18" y1="12" x2="20" y2="12" stroke={ACCENT} strokeWidth="1.2" strokeLinecap="round" />
       </>
     ),
   },
@@ -152,9 +110,9 @@ const PIPELINE_STAGES = [
     label: "Apply",
     icon: (
       <>
-        <path d="M12 4 L12 16" stroke="#F0B429" strokeWidth="1.8" strokeLinecap="round" />
-        <path d="M7 9 L12 4 L17 9" stroke="#F0B429" strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-        <line x1="5" y1="20" x2="19" y2="20" stroke="#F0B429" strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M12 4 L12 16" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" />
+        <path d="M7 9 L12 4 L17 9" stroke={ACCENT} strokeWidth="1.8" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+        <line x1="5" y1="20" x2="19" y2="20" stroke={ACCENT} strokeWidth="1.8" strokeLinecap="round" />
       </>
     ),
   },
@@ -162,12 +120,12 @@ const PIPELINE_STAGES = [
     label: "Interview",
     icon: (
       <>
-        <rect x="4" y="6" width="16" height="14" rx="2" stroke="#F0B429" strokeWidth="1.6" fill="none" />
-        <line x1="4" y1="11" x2="20" y2="11" stroke="#F0B429" strokeWidth="1.2" />
-        <line x1="8" y1="6" x2="8" y2="3" stroke="#F0B429" strokeWidth="1.5" strokeLinecap="round" />
-        <line x1="16" y1="6" x2="16" y2="3" stroke="#F0B429" strokeWidth="1.5" strokeLinecap="round" />
-        <circle cx="10" cy="15.5" r="1.2" fill="#F0B429" />
-        <circle cx="14.5" cy="15.5" r="1.2" fill="#F0B429" />
+        <rect x="4" y="6" width="16" height="14" rx="2" stroke={ACCENT} strokeWidth="1.6" fill="none" />
+        <line x1="4" y1="11" x2="20" y2="11" stroke={ACCENT} strokeWidth="1.2" />
+        <line x1="8" y1="6" x2="8" y2="3" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" />
+        <line x1="16" y1="6" x2="16" y2="3" stroke={ACCENT} strokeWidth="1.5" strokeLinecap="round" />
+        <circle cx="10" cy="15.5" r="1.2" fill={ACCENT} />
+        <circle cx="14.5" cy="15.5" r="1.2" fill={ACCENT} />
       </>
     ),
   },
@@ -197,10 +155,6 @@ function PipelineViz() {
               <feMergeNode in="SourceGraphic" />
             </feMerge>
           </filter>
-          <radialGradient id="dot-grad">
-            <stop offset="0%" stopColor="#F0B429" />
-            <stop offset="100%" stopColor="#F0B429" stopOpacity="0" />
-          </radialGradient>
         </defs>
 
         {PIPELINE_STAGES.map((stage, i) => {
@@ -209,7 +163,6 @@ function PipelineViz() {
 
           return (
             <g key={stage.label}>
-              {/* connector line + flowing dots */}
               {i < PIPELINE_STAGES.length - 1 && (
                 <g>
                   <line
@@ -217,11 +170,11 @@ function PipelineViz() {
                     y1={centerY}
                     x2={x + nodeW + gap}
                     y2={centerY}
-                    stroke="rgba(240,180,41,0.15)"
+                    stroke="rgba(13,148,136,0.15)"
                     strokeWidth="2"
                   />
                   {[0, 1, 2].map((d) => (
-                    <circle key={d} r="2.5" fill="#F0B429" filter="url(#pipe-glow)">
+                    <circle key={d} r="2.5" fill={ACCENT} filter="url(#pipe-glow)">
                       <animateMotion
                         dur="1.8s"
                         repeatCount="indefinite"
@@ -240,20 +193,18 @@ function PipelineViz() {
                 </g>
               )}
 
-              {/* node card */}
               <rect
                 x={x}
                 y={centerY - nodeH / 2}
                 width={nodeW}
                 height={nodeH}
                 rx="14"
-                fill="rgba(16,16,18,0.8)"
-                stroke="rgba(240,180,41,0.2)"
+                fill="var(--bg-card)"
+                stroke="rgba(13,148,136,0.2)"
                 strokeWidth="1"
                 className="landing-pipeline-node"
                 style={{ animationDelay: `${i * 0.15}s` }}
               />
-              {/* glow behind node */}
               <rect
                 x={x + 4}
                 y={centerY - nodeH / 2 + 4}
@@ -261,22 +212,20 @@ function PipelineViz() {
                 height={nodeH - 8}
                 rx="10"
                 fill="none"
-                stroke="rgba(240,180,41,0.06)"
+                stroke="rgba(13,148,136,0.06)"
                 strokeWidth="8"
                 filter="url(#pipe-glow)"
               />
 
-              {/* icon */}
               <g transform={`translate(${x + nodeW / 2 - 12}, ${centerY - 16})`}>
                 {stage.icon}
               </g>
 
-              {/* label */}
               <text
                 x={x + nodeW / 2}
                 y={centerY + 28}
                 textAnchor="middle"
-                fill="#71717A"
+                fill="var(--text-muted)"
                 fontSize="10"
                 fontFamily="'IBM Plex Mono', monospace"
                 fontWeight="500"
@@ -475,7 +424,7 @@ export default function Landing() {
   if (loading) {
     return (
       <div className="landing-root" style={{ display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <span style={{ color: "#71717A", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.18em" }}>
+        <span style={{ color: "var(--text-muted)", fontSize: 12, textTransform: "uppercase", letterSpacing: "0.18em" }}>
           Loading
         </span>
       </div>
@@ -485,28 +434,26 @@ export default function Landing() {
   if (user) return <Navigate to="/" replace />;
 
   return (
-    <div className="landing-root" style={{ "--accent": ACCENT, "--accent-dark": ACCENT_DARK }}>
+    <div className="landing-root">
       <Particles />
 
       {/* Header */}
       <header className={`landing-header ${visible ? "landing-visible" : ""}`}>
         <a href="https://doaide.com" className="landing-brand" target="_blank" rel="noopener noreferrer">
-          <RobotFace size={28} color={ACCENT} />
+          <svg viewBox="0 0 32 32" width="28" height="28">
+            <rect x="2" y="2" width="28" height="28" rx="6" fill={ACCENT} />
+            <text x="16" y="22" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif" fontWeight="700" fontSize="16" fill="white">J</text>
+          </svg>
           <span className="landing-brand-text">
-            DoAide <em>Jobs</em>
+            DoAide <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>|</span> <em>AutoApply</em>
           </span>
         </a>
       </header>
 
       {/* Split layout */}
       <main className={`landing-split ${visible ? "landing-visible" : ""}`}>
-        {/* Left panel — product info */}
         <div className="landing-left">
           <div className="landing-left-content">
-            <div className="landing-hero-robot-wrap">
-              <HeroRobot color={ACCENT} />
-            </div>
-
             <h1 className="landing-headline">
               Job applications, <em>automated.</em>
             </h1>
@@ -523,7 +470,6 @@ export default function Landing() {
           </div>
         </div>
 
-        {/* Right panel — auth */}
         <div className="landing-right">
           <AuthForm />
         </div>
@@ -542,9 +488,17 @@ export default function Landing() {
         </div>
         <div className="landing-footer-bottom">
           <a href="https://doaide.com" className="landing-footer-home" target="_blank" rel="noopener noreferrer">
-            <RobotFace size={16} color={ACCENT} />
+            <svg viewBox="0 0 32 32" width="16" height="16">
+              <rect x="2" y="2" width="28" height="28" rx="6" fill={ACCENT} />
+              <text x="16" y="22" textAnchor="middle" fontFamily="Inter, system-ui, sans-serif" fontWeight="700" fontSize="16" fill="white">D</text>
+            </svg>
             doaide.com
           </a>
+          <span style={{ color: "var(--text-muted)", fontSize: "11px" }}>
+            <a href="https://doaide.com" className="landing-footer-link" style={{ border: "1px solid var(--da-border)", borderRadius: "999px", padding: "2px 10px", fontSize: "10px", textTransform: "uppercase", letterSpacing: "0.08em", fontWeight: 500 }} target="_blank" rel="noopener noreferrer">
+              A DoAide Product
+            </a>
+          </span>
           <span className="landing-footer-copy">&copy; {new Date().getFullYear()} DoAide</span>
         </div>
       </footer>

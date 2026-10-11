@@ -1,0 +1,124 @@
+/*
+ * DoAide Unified Theme v5.0 — AutoApply
+ * White/light default, system theme detection, teal primary accent.
+ *
+ * Products: Desk · Pulse · 409A · AutoApply · Realty
+ * Fonts: Inter (UI) · Instrument Serif (display) · IBM Plex Mono (data)
+ * Primary: Teal #0D9488 (light) / #2DD4BF (dark)
+ *
+ * Colour channels are exposed as space-separated RGB triplets so Tailwind's
+ * opacity modifier syntax works:  rgb(var(--c-ink-900) / 0.5)
+ */
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600;700;800;900&display=swap');
+
+/* ── Light mode (default) ─────────────────────────────────── */
+:root {
+  color-scheme: light;
+
+  --c-canvas:      255 255 255;
+  --c-paper:       249 250 251;
+  --c-ink-900:      17  24  39;
+  --c-ink-700:      55  65  81;
+  --c-ink-500:     107 114 128;
+  --c-ink-400:     156 163 175;
+  --c-line:        229 231 235;
+  --c-line-strong: 209 213 219;
+  --c-brand-300:    94 234 212;
+  --c-brand-500:    13 148 136;
+  --c-brand-600:    15 118 110;
+  --c-brand-700:    17  94  89;
+
+  --shadow-card: 0 1px 3px rgba(0,0,0,.08), 0 1px 2px rgba(0,0,0,.06);
+  --shadow-lift: 0 4px 12px -2px rgba(0,0,0,.1), 0 2px 4px -2px rgba(0,0,0,.06);
+  --shadow-pop:  0 12px 32px -8px rgba(0,0,0,.15);
+
+  --da-primary:          #0D9488;
+  --da-primary-hover:    #0F766E;
+  --da-primary-light:    #2DD4BF;
+  --da-primary-dim:      #115E59;
+  --da-primary-bg:       rgba(13, 148, 136, 0.1);
+  --da-primary-bg-hover: rgba(13, 148, 136, 0.15);
+  --da-bg:               #FFFFFF;
+  --da-bg-alt:           #F3F4F6;
+  --da-surface:          #F9FAFB;
+  --da-surface-hover:    #F3F4F6;
+  --da-border:           #E5E7EB;
+  --da-border-light:     #D1D5DB;
+  --da-text:             #111827;
+  --da-text-secondary:   #6B7280;
+  --da-text-muted:       #9CA3AF;
+  --da-text-on-primary:  #FFFFFF;
+  --da-success:          #059669;
+  --da-error:            #DC2626;
+  --da-warning:          #D97706;
+  --da-info:             #2563EB;
+
+  --da-font:         'Inter', system-ui, -apple-system, sans-serif;
+  --da-font-display: 'Instrument Serif', Georgia, serif;
+  --da-font-mono:    'IBM Plex Mono', ui-monospace, SFMono-Regular, monospace;
+  --da-shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.06);
+  --da-shadow-md:    0 4px 6px rgba(0, 0, 0, 0.08);
+  --da-shadow-lg:    0 10px 15px rgba(0, 0, 0, 0.1);
+  --da-shadow-brand: 0 0 20px rgba(13, 148, 136, 0.15);
+  --da-radius-sm: 6px;
+  --da-radius-md: 8px;
+  --da-radius-lg: 12px;
+  --da-radius-xl: 16px;
+  --da-transition: 150ms ease;
+}
+
+/* ── Dark mode ─────────────────────────────────────────────── */
+.dark {
+  color-scheme: dark;
+
+  --c-canvas:       10  10  11;
+  --c-paper:        26  26  29;
+  --c-ink-900:     229 231 235;
+  --c-ink-700:     209 213 219;
+  --c-ink-500:     156 163 175;
+  --c-ink-400:     107 114 128;
+  --c-line:         42  42  45;
+  --c-line-strong:  51  51  54;
+  --c-brand-300:    94 234 212;
+  --c-brand-500:    45 212 191;
+  --c-brand-600:    20 184 166;
+  --c-brand-700:    13 148 136;
+
+  --shadow-card: 0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.2);
+  --shadow-lift: 0 4px 12px -2px rgba(0,0,0,.4), 0 2px 4px -2px rgba(0,0,0,.3);
+  --shadow-pop:  0 12px 32px -8px rgba(0,0,0,.5);
+
+  --da-primary:          #2DD4BF;
+  --da-primary-hover:    #5EEAD4;
+  --da-primary-light:    #99F6E4;
+  --da-primary-dim:      #0D9488;
+  --da-primary-bg:       rgba(45, 212, 191, 0.1);
+  --da-primary-bg-hover: rgba(45, 212, 191, 0.15);
+  --da-bg:               #0A0A0B;
+  --da-bg-alt:           #111113;
+  --da-surface:          #1A1A1D;
+  --da-surface-hover:    #222225;
+  --da-border:           #2A2A2D;
+  --da-border-light:     #333336;
+  --da-text:             #E5E7EB;
+  --da-text-secondary:   #9CA3AF;
+  --da-text-muted:       #6B7280;
+  --da-text-on-primary:  #0A0A0B;
+  --da-success:          #34D399;
+  --da-error:            #F87171;
+  --da-warning:          #FBBF24;
+  --da-info:             #60A5FA;
+  --da-shadow-sm:        0 1px 2px rgba(0, 0, 0, 0.3);
+  --da-shadow-md:        0 4px 6px rgba(0, 0, 0, 0.4);
+  --da-shadow-lg:        0 10px 15px rgba(0, 0, 0, 0.5);
+  --da-shadow-brand:     0 0 20px rgba(45, 212, 191, 0.15);
+}
+
+.doaide-gold    { color: var(--da-primary); }
+.doaide-gold-bg { background-color: var(--da-primary); color: var(--da-text-on-primary); }
+.doaide-surface { background-color: var(--da-surface); }
+.doaide-card {
+  background-color: var(--da-surface);
+  border: 1px solid var(--da-border);
+  border-radius: var(--da-radius-lg);
+}

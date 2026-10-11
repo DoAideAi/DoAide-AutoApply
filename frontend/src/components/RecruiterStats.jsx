@@ -226,7 +226,7 @@ export function TrendBars({ points = [], bucket = "day" }) {
                 width={8}
                 height={height}
                 rx={1.5}
-                fill={value > 0 ? "#f0b429" : "rgba(255,255,255,0.08)"}
+                fill={value > 0 ? "#0D9488" : "rgba(255,255,255,0.08)"}
               />
             );
           })}

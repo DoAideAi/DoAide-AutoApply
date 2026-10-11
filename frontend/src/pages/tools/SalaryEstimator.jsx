@@ -85,41 +85,38 @@ export default function SalaryEstimator() {
   return (
     <PublicLayout title="Free Tech Salary Estimator" jsonLd={jsonLd}>
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2">Tech Salary Estimator</h1>
-        <p className="text-zinc-400 mb-6">Estimate salary ranges for top tech roles based on location and experience.</p>
+        <h1 className="text-3xl font-bold text-ink-900 mb-2">Tech Salary Estimator</h1>
+        <p className="text-ink-500 mb-6">Estimate salary ranges for top tech roles based on location and experience.</p>
 
         <div className="grid sm:grid-cols-3 gap-4 mb-6">
           <div>
-            <label className="block text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">Role</label>
+            <label className="block text-xs text-ink-500 mb-1.5 uppercase tracking-wider">Role</label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value)}
-              className="w-full rounded-lg px-3 py-2.5 text-sm border-0 focus:outline-none focus:ring-2"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#E4E4E7", "--tw-ring-color": "rgba(240,180,41,0.3)" }}
+              className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
               <option value="">Select role</option>
               {Object.keys(ROLES).map((r) => <option key={r} value={r}>{r}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">Location</label>
+            <label className="block text-xs text-ink-500 mb-1.5 uppercase tracking-wider">Location</label>
             <select
               value={location}
               onChange={(e) => setLocation(e.target.value)}
-              className="w-full rounded-lg px-3 py-2.5 text-sm border-0 focus:outline-none focus:ring-2"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#E4E4E7", "--tw-ring-color": "rgba(240,180,41,0.3)" }}
+              className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
               <option value="">Select location</option>
               {Object.keys(LOCATIONS).map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
           <div>
-            <label className="block text-xs text-zinc-500 mb-1.5 uppercase tracking-wider">Experience</label>
+            <label className="block text-xs text-ink-500 mb-1.5 uppercase tracking-wider">Experience</label>
             <select
               value={experience}
               onChange={(e) => setExperience(e.target.value)}
-              className="w-full rounded-lg px-3 py-2.5 text-sm border-0 focus:outline-none focus:ring-2"
-              style={{ background: "rgba(255,255,255,0.06)", color: "#E4E4E7", "--tw-ring-color": "rgba(240,180,41,0.3)" }}
+              className="w-full rounded-lg border border-line bg-canvas px-3 py-2.5 text-sm text-ink-900 focus:outline-none focus:ring-2 focus:ring-brand-500/30"
             >
               <option value="">Select experience</option>
               {Object.keys(EXPERIENCE).map((e) => <option key={e} value={e}>{e}</option>)}
@@ -128,20 +125,20 @@ export default function SalaryEstimator() {
         </div>
 
         {estimate && (
-          <div className="rounded-xl p-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
-            <h2 className="text-lg font-semibold text-white mb-4">Estimated Salary Range</h2>
+          <div className="rounded-xl border border-line bg-paper p-6">
+            <h2 className="text-lg font-semibold text-ink-900 mb-4">Estimated Salary Range</h2>
             <div className="mb-4">
-              <div className="flex justify-between text-xs text-zinc-500 mb-1">
+              <div className="flex justify-between text-xs text-ink-500 mb-1">
                 <span>{fmt(estimate.min)}</span>
                 <span>{fmt(estimate.max)}</span>
               </div>
-              <div className="h-3 rounded-full" style={{ background: "rgba(255,255,255,0.06)" }}>
-                <div className="h-full rounded-full relative" style={{ background: "linear-gradient(90deg, #D4A017, #F0B429)", width: "100%" }}>
+              <div className="h-3 rounded-full bg-line">
+                <div className="h-full rounded-full relative" style={{ background: "linear-gradient(90deg, #0F766E, #0D9488)", width: "100%" }}>
                   <div
                     className="absolute top-1/2 -translate-y-1/2 w-4 h-4 rounded-full border-2"
                     style={{
-                      background: "#F0B429",
-                      borderColor: "#0A0A0B",
+                      background: "#0D9488",
+                      borderColor: "#FFFFFF",
                       left: `${((estimate.median - estimate.min) / (estimate.max - estimate.min)) * 100}%`,
                       transform: "translate(-50%, -50%)",
                     }}
@@ -151,19 +148,19 @@ export default function SalaryEstimator() {
             </div>
             <div className="grid grid-cols-3 gap-4 text-center">
               <div>
-                <div className="text-xs text-zinc-500 mb-1">Minimum</div>
-                <div className="text-lg font-bold text-zinc-300">{fmt(estimate.min)}</div>
+                <div className="text-xs text-ink-500 mb-1">Minimum</div>
+                <div className="text-lg font-bold text-ink-700">{fmt(estimate.min)}</div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 mb-1">Median</div>
-                <div className="text-lg font-bold" style={{ color: "#F0B429" }}>{fmt(estimate.median)}</div>
+                <div className="text-xs text-ink-500 mb-1">Median</div>
+                <div className="text-lg font-bold text-brand-500">{fmt(estimate.median)}</div>
               </div>
               <div>
-                <div className="text-xs text-zinc-500 mb-1">Maximum</div>
-                <div className="text-lg font-bold text-zinc-300">{fmt(estimate.max)}</div>
+                <div className="text-xs text-ink-500 mb-1">Maximum</div>
+                <div className="text-lg font-bold text-ink-700">{fmt(estimate.max)}</div>
               </div>
             </div>
-            <p className="text-xs text-zinc-500 mt-4">Based on aggregated industry data. Actual compensation may vary by company, benefits, and equity.</p>
+            <p className="text-xs text-ink-400 mt-4">Based on aggregated industry data. Actual compensation may vary by company, benefits, and equity.</p>
           </div>
         )}
 

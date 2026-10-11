@@ -63,12 +63,12 @@ function analyze(text) {
 }
 
 function ScoreGauge({ score }) {
-  const color = score >= 70 ? "#22C55E" : score >= 40 ? "#F0B429" : "#EF4444";
+  const color = score >= 70 ? "#059669" : score >= 40 ? "#0D9488" : "#DC2626";
   return (
     <div className="flex flex-col items-center gap-2">
       <div className="relative w-32 h-32">
         <svg viewBox="0 0 120 120" className="w-full h-full">
-          <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth="10" />
+          <circle cx="60" cy="60" r="50" fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth="10" />
           <circle
             cx="60" cy="60" r="50" fill="none" stroke={color} strokeWidth="10"
             strokeDasharray={`${(score / 100) * 314} 314`}
@@ -110,58 +110,57 @@ export default function ResumeScore() {
   return (
     <PublicLayout title="Free ATS Resume Score Checker" jsonLd={jsonLd}>
       <div className="max-w-3xl mx-auto">
-        <h1 className="text-3xl font-bold text-white mb-2">ATS Resume Score Checker</h1>
-        <p className="text-zinc-400 mb-6">Paste your resume text below and get an instant ATS compatibility score with actionable tips.</p>
+        <h1 className="text-3xl font-bold text-ink-900 mb-2">ATS Resume Score Checker</h1>
+        <p className="text-ink-500 mb-6">Paste your resume text below and get an instant ATS compatibility score with actionable tips.</p>
 
         <textarea
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={12}
           placeholder="Paste your resume text here..."
-          className="w-full rounded-xl p-4 text-sm leading-relaxed resize-y border-0 focus:outline-none focus:ring-2"
-          style={{ background: "rgba(255,255,255,0.04)", color: "#E4E4E7", caretColor: "#F0B429", "--tw-ring-color": "rgba(240,180,41,0.3)" }}
+          className="w-full rounded-xl border border-line bg-canvas p-4 text-sm text-ink-900 leading-relaxed resize-y focus:outline-none focus:ring-2 focus:ring-brand-500/30"
+          style={{ caretColor: "#0D9488" }}
         />
 
         <button
           onClick={handleAnalyze}
           disabled={!text.trim()}
-          className="mt-4 rounded-lg px-6 py-2.5 font-medium transition-opacity disabled:opacity-40 cursor-pointer border-0"
-          style={{ background: "#F0B429", color: "#0A0A0B" }}
+          className="btn-primary mt-4 cursor-pointer disabled:opacity-40"
         >
           Analyze Resume
         </button>
 
         {result && (
-          <div className="mt-8 rounded-xl p-6" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)" }}>
+          <div className="mt-8 rounded-xl border border-line bg-paper p-6">
             <div className="flex flex-col sm:flex-row items-start sm:items-center gap-6 mb-6">
               <ScoreGauge score={result.total} />
               <div className="flex-1 grid grid-cols-2 gap-3 text-sm">
-                <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)" }}>
-                  <div className="text-zinc-500 text-xs mb-1">Action Verbs</div>
-                  <div className="text-white font-medium">{result.verbScore}/25</div>
+                <div className="rounded-lg bg-canvas p-3">
+                  <div className="text-ink-500 text-xs mb-1">Action Verbs</div>
+                  <div className="text-ink-900 font-medium">{result.verbScore}/25</div>
                 </div>
-                <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)" }}>
-                  <div className="text-zinc-500 text-xs mb-1">Quantified Results</div>
-                  <div className="text-white font-medium">{result.quantScore}/20</div>
+                <div className="rounded-lg bg-canvas p-3">
+                  <div className="text-ink-500 text-xs mb-1">Quantified Results</div>
+                  <div className="text-ink-900 font-medium">{result.quantScore}/20</div>
                 </div>
-                <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)" }}>
-                  <div className="text-zinc-500 text-xs mb-1">Sections</div>
-                  <div className="text-white font-medium">{result.sectionScore}/20</div>
+                <div className="rounded-lg bg-canvas p-3">
+                  <div className="text-ink-500 text-xs mb-1">Sections</div>
+                  <div className="text-ink-900 font-medium">{result.sectionScore}/20</div>
                 </div>
-                <div className="rounded-lg p-3" style={{ background: "rgba(255,255,255,0.03)" }}>
-                  <div className="text-zinc-500 text-xs mb-1">Length ({result.lengthWords} words)</div>
-                  <div className="text-white font-medium">{result.lengthScore}/20</div>
+                <div className="rounded-lg bg-canvas p-3">
+                  <div className="text-ink-500 text-xs mb-1">Length ({result.lengthWords} words)</div>
+                  <div className="text-ink-900 font-medium">{result.lengthScore}/20</div>
                 </div>
               </div>
             </div>
 
             {result.tips.length > 0 && (
               <div>
-                <h3 className="text-sm font-semibold text-white mb-2">Tips to Improve</h3>
+                <h3 className="text-sm font-semibold text-ink-900 mb-2">Tips to Improve</h3>
                 <ul className="space-y-1.5">
                   {result.tips.map((tip, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm text-zinc-400">
-                      <span style={{ color: "#F0B429" }}>&#x2022;</span>
+                    <li key={i} className="flex items-start gap-2 text-sm text-ink-500">
+                      <span className="text-brand-500">&#x2022;</span>
                       {tip}
                     </li>
                   ))}

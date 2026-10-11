@@ -3,10 +3,6 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import Logo from "../components/ui/Logo";
 
-/**
- * One page for both signing in and signing up — the distinction is a toggle,
- * not a separate route. Name is optional: we read it off the resume anyway.
- */
 export default function Login() {
   const { user, login, register } = useAuth();
   const [mode, setMode] = useState("signin");
@@ -35,14 +31,14 @@ export default function Login() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center px-5 py-16">
+    <div className="flex min-h-screen items-center justify-center bg-canvas px-5 py-16">
       <div className="stagger w-full max-w-[380px]">
         <div className="mb-10 text-center">
-          <Logo className="mx-auto mb-5 h-12 w-12 text-signal" />
-          <h1 className="font-display text-[42px] leading-none tracking-tightest text-white">
-            DoAide<span className="italic text-signal"> AutoApply</span>
+          <Logo className="mx-auto mb-5 h-12 w-12 text-brand-500" />
+          <h1 className="text-[42px] font-extrabold leading-none tracking-tightest text-ink-900">
+            DoAide <span className="text-ink-400">|</span> <span className="text-brand-500">AutoApply</span>
           </h1>
-          <p className="mt-4 text-sm leading-relaxed text-white/45">
+          <p className="mt-4 text-sm leading-relaxed text-ink-500">
             Upload a resume. We find the recruiters,
             <br />
             write the emails, and track the replies.
@@ -100,7 +96,7 @@ export default function Login() {
           </div>
 
           {error && (
-            <p className="rounded-lg border border-bad/25 bg-bad/10 px-3 py-2 text-xs text-bad">
+            <p className="rounded-lg border border-bad/25 bg-bad-wash px-3 py-2 text-xs text-bad">
               {error}
             </p>
           )}
@@ -110,11 +106,11 @@ export default function Login() {
           </button>
         </form>
 
-        <p className="mt-6 text-center text-sm text-white/35">
+        <p className="mt-6 text-center text-sm text-ink-400">
           {isSignUp ? "Already have an account?" : "First time here?"}{" "}
           <button
             type="button"
-            className="text-signal underline-offset-4 hover:underline"
+            className="text-brand-500 underline-offset-4 hover:underline"
             onClick={() => {
               setMode(isSignUp ? "signin" : "signup");
               setError(null);

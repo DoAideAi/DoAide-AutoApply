@@ -9,7 +9,7 @@
 
 const BANDS = [
   { min: 80, key: "strong", label: "strong match", tone: "text-good", ring: "#4ade80" },
-  { min: 65, key: "good", label: "good match", tone: "text-signal", ring: "#f0b429" },
+  { min: 65, key: "good", label: "good match", tone: "text-signal", ring: "#0D9488" },
   { min: 45, key: "stretch", label: "a stretch", tone: "text-warn", ring: "#fb923c" },
   { min: 0, key: "poor", label: "weak match", tone: "text-bad", ring: "#f87171" },
 ];
