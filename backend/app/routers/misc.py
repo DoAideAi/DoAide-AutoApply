@@ -234,7 +234,7 @@ main{{width:100%;max-width:440px;background:var(--card);border:1px solid var(--l
 border-radius:14px;padding:32px 28px;box-shadow:0 1px 3px rgba(0,0,0,.06)}}
 h1{{margin:0 0 10px;font-size:21px;line-height:1.3}}
 p{{margin:0 0 22px;color:var(--muted)}}
-strong{{color:var(--ink);word-break:break-all}}
+strong{{color:var(--ink);overflow-wrap:anywhere}}
 button{{width:100%;border:0;border-radius:9px;padding:11px 16px;font:inherit;
 font-weight:600;cursor:pointer;transition:background .15s}}
 .primary{{background:var(--accent);color:#fff}}.primary:hover{{background:var(--accent-hover)}}
