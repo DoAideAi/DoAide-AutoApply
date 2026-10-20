@@ -190,4 +190,49 @@ def suppress(db: Session, recruiter: Recruiter, *, reason: str) -> int:
     return moved
 
 
-__all__ = ["apply", "mail_route_is_read", "suppress"]
+def is_opted_out(db: Session, address: str) -> bool:
+    """Whether every contact row for *address* is opted out (and there is one).
+
+    For the opt-out page's current state, which it shows only to a holder of a
+    signed link — anyone else would be using this as an oracle. See
+    :func:`apply` for why that matters.
+    """
+    cleaned = (address or "").strip()
+    if not cleaned:
+        return False
+    flags = db.scalars(
+        select(Recruiter.opted_out).where(ci_equals(Recruiter.email, cleaned))
+    ).all()
+    return bool(flags) and all(flags)
+
+
+def restore(db: Session, address: str) -> int:
+    """Give *address* its consent back: the inverse of :func:`apply`'s flag.
+
+    The person changed their mind on the opt-out page, so the flag the send
+    path checks is cleared on every row it was set on. Only the flag. The
+    follow-ups and queued mail :func:`suppress` cancelled stay cancelled, and
+    applications stay at ``UNSUBSCRIBED`` — re-subscribing says "you may write
+    to me", not "resume the drip you were running"; a user who wants to write
+    again does so deliberately.
+
+    Callers must only reach this with a *signed* link (see
+    ``routers/misc``): unlike an opt-out, a forged opt-in mails somebody who
+    asked not to be mailed.
+
+    Returns the rows changed. Does not commit.
+    """
+    cleaned = (address or "").strip()
+    if not cleaned:
+        return 0
+    rows = db.scalars(
+        select(Recruiter).where(
+            ci_equals(Recruiter.email, cleaned), Recruiter.opted_out.is_(True)
+        )
+    ).all()
+    for recruiter in rows:
+        recruiter.opted_out = False
+    return len(rows)
+
+
+__all__ = ["apply", "is_opted_out", "mail_route_is_read", "restore", "suppress"]

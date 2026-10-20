@@ -156,10 +156,10 @@ def _record(request: unsubscribe_service.UnsubscribeRequest, contacts: int) -> N
     )
 
 
-def _opt_out(db: Session, address: str, signature: str | None) -> str:
-    """Opt an address out everywhere, and render the confirmation page.
+def _opt_out(db: Session, request: unsubscribe_service.UnsubscribeRequest) -> None:
+    """Opt an address out everywhere.
 
-    Deliberately idempotent and deliberately silent about what it found. The
+    Deliberately idempotent and deliberately silent about what it found: the
     page says the same thing whether the address was on ten recruiter rows or
     none, because the alternative — "we had no record of you" — turns an
     unsubscribe endpoint into an oracle telling any caller whether a given
@@ -172,7 +172,6 @@ def _opt_out(db: Session, address: str, signature: str | None) -> str:
     cancelled every follow-up behind them. A signature would not have helped,
     because this endpoint honours unsigned links on purpose.
     """
-    request = unsubscribe_service.verify(address, signature)
     contacts = 0
     if request.valid:
         # The consent flag plus the work queued behind it — a sequence left
@@ -183,19 +182,93 @@ def _opt_out(db: Session, address: str, signature: str | None) -> str:
         contacts = opt_out.apply(db, request.address, reason="recipient unsubscribed")
         if contacts:
             db.commit()
-
     _record(request, contacts)
 
+
+# The page is one card in three states. `confirm` asks, `unsubscribed` confirms
+# and offers the way back, `resubscribed` confirms that and offers the way out
+# again. Each is a POST form with no `action` attribute, so it posts back to the
+# exact URL — query string, signature and all — that the email carried.
+_STATES = {
+    "confirm": (
+        "Unsubscribe from these emails?",
+        "You'll stop receiving job-application emails sent to {email} "
+        "through AutoApply.",
+        ("unsubscribe", "Unsubscribe", True),
+    ),
+    "unsubscribed": (
+        "You've been unsubscribed",
+        "You will no longer receive job-application emails at {email}.",
+        ("resubscribe", "Re-subscribe", False),
+    ),
+    "resubscribed": (
+        "You're subscribed again",
+        "Job seekers using AutoApply may contact you at {email} again. "
+        "Follow-ups that were cancelled stay cancelled.",
+        ("unsubscribe", "Unsubscribe", True),
+    ),
+    "refused": (
+        "This link can't re-subscribe you",
+        "Re-subscribing needs the original link from an email. You can still "
+        "unsubscribe {email} below.",
+        ("unsubscribe", "Unsubscribe", True),
+    ),
+}
+
+_PAGE = """<!doctype html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<meta name="referrer" content="no-referrer">
+<title>{title}</title>
+<style>
+:root{{color-scheme:light dark;--bg:#f9fafb;--card:#fff;--ink:#111827;--muted:#6b7280;
+--line:#e5e7eb;--accent:#0d9488;--accent-hover:#0f766e;--ghost:#f3f4f6}}
+@media (prefers-color-scheme:dark){{:root{{--bg:#0a0a0b;--card:#141417;--ink:#e5e7eb;
+--muted:#9ca3af;--line:#2a2a2d;--accent:#14b8a6;--accent-hover:#2dd4bf;--ghost:#1a1a1d}}}}
+*{{box-sizing:border-box}}
+body{{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;
+padding:24px 16px;background:var(--bg);color:var(--ink);
+font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Helvetica,Arial,sans-serif}}
+main{{width:100%;max-width:440px;background:var(--card);border:1px solid var(--line);
+border-radius:14px;padding:32px 28px;box-shadow:0 1px 3px rgba(0,0,0,.06)}}
+h1{{margin:0 0 10px;font-size:21px;line-height:1.3}}
+p{{margin:0 0 22px;color:var(--muted)}}
+strong{{color:var(--ink);word-break:break-all}}
+button{{width:100%;border:0;border-radius:9px;padding:11px 16px;font:inherit;
+font-weight:600;cursor:pointer;transition:background .15s}}
+.primary{{background:var(--accent);color:#fff}}.primary:hover{{background:var(--accent-hover)}}
+.ghost{{background:var(--ghost);color:var(--ink);border:1px solid var(--line)}}
+.ghost:hover{{border-color:var(--accent)}}
+button:focus-visible{{outline:2px solid var(--accent);outline-offset:2px}}
+</style></head>
+<body><main data-state="{state}">
+<h1>{title}</h1>
+<p>{body}</p>
+{form}
+</main></body></html>"""
+
+
+def _page(state: str, address: str, *, signed: bool = True) -> str:
+    """The opt-out card in *state*, for *address* (escaped).
+
+    An unsigned link gets no Re-subscribe button: the POST would refuse it.
+    """
+    title, body, (action, label, primary) = _STATES[state]
     # Escaped: the address is echoed straight from the query string, and an
     # unauthenticated public endpoint that reflects its input into HTML is a
     # stored-nowhere-but-still-real XSS against anyone handed the link.
-    shown = escape(request.address) or "this address"
-    return (
-        "<html><body style='font-family:sans-serif;max-width:480px;margin:64px auto'>"
-        "<h2>You've been unsubscribed</h2>"
-        "<p>You will no longer receive outreach emails at "
-        f"<strong>{shown}</strong>.</p>"
-        "</body></html>"
+    shown = f"<strong>{escape(address)}</strong>" if address else "this address"
+    form = (
+        '<form method="post">'
+        f'<input type="hidden" name="action" value="{action}">'
+        f'<button type="submit" class="{"primary" if primary else "ghost"}">'
+        f"{label}</button></form>"
+        if address and (signed or action != "resubscribe")
+        else ""
+    )
+    return _PAGE.format(
+        title=title, body=body.format(email=shown), form=form, state=state
     )
 
 
@@ -207,18 +280,26 @@ def _opt_out(db: Session, address: str, signature: str | None) -> str:
 def unsubscribe(
     email: str, sig: str | None = None, db: Session = Depends(get_db)
 ) -> str:
-    """CAN-SPAM opt-out: mark every matching recruiter as opted-out immediately.
+    """The page an opt-out link opens: the address and an Unsubscribe button.
 
-    Public (no auth) by design — recruiters click this from an email, and match
-    is on address across every user's recruiter list, because consent belongs to
-    the human and not to whoever happened to add them.
+    A GET changes nothing. It used to opt the address out on arrival, which
+    also meant every link scanner and mail-security prefetcher that fetched the
+    URL unsubscribed the recruiter before a human saw the message. Opting out
+    is the button's POST — or the provider's own one-click POST.
+
+    The current state is shown only to a signed link: it proves the holder was
+    sent our mail, while to an unsigned caller "already unsubscribed" would
+    answer whether an address is in the database.
 
     ``sig`` is the HMAC :mod:`app.services.unsubscribe` puts on the link. It is
-    checked but never *required*: links already sitting in mailboxes predate it,
+    never *required* to opt out: links already sitting in mailboxes predate it,
     and refusing a genuine opt-out to punish a missing parameter is the one
     outcome worse than honouring a forged one.
     """
-    return _opt_out(db, email, sig)
+    request = unsubscribe_service.verify(email, sig)
+    if request.signed and opt_out.is_opted_out(db, request.address):
+        return _page("unsubscribed", request.address)
+    return _page("confirm", request.address)
 
 
 @router.post(
@@ -226,22 +307,42 @@ def unsubscribe(
     response_class=HTMLResponse,
     dependencies=[Depends(_unsubscribe_limit)],
 )
-def unsubscribe_one_click(
+def unsubscribe_post(
     email: str,
     sig: str | None = None,
     # RFC 8058 says the provider POSTs `List-Unsubscribe=One-Click` as a form
-    # body. We do not branch on it — the URL already identifies the recipient —
-    # but it is declared so the body parses rather than 422ing, and Optional so
-    # a hand-rolled POST without it still works.
+    # body. It is declared so the body parses rather than 422ing, and Optional
+    # so a hand-rolled POST without it still works.
     List_Unsubscribe: str | None = Form(default=None, alias="List-Unsubscribe"),
+    action: str | None = Form(default=None),
     db: Session = Depends(get_db),
-) -> str:
-    """The one-click opt-out (RFC 8058) that every unsolicited send advertises.
+) -> HTMLResponse:
+    """Opt out — or, from the page's own form, opt back in.
 
-    Gmail's and Yahoo's native "Unsubscribe" buttons POST here rather than
-    navigating; without this route they got a 405 against a sender whose headers
-    promised otherwise, which reads to the provider as a broken opt-out — the
-    exact failure the header exists to rule out. Same effect as the GET, since
-    the click means the same thing whichever way the provider delivers it.
+    Anything but an explicit ``action=resubscribe`` is an opt-out. That covers
+    the page's Unsubscribe button and the one-click opt-out (RFC 8058) every
+    unsolicited send advertises: Gmail's and Yahoo's native "Unsubscribe"
+    buttons POST here with no ``action``, and must keep opting out at once.
+
+    Re-subscribing requires a valid signature. The asymmetry is the one
+    :func:`app.services.unsubscribe.verify` describes, run backwards: a forged
+    opt-out costs a contact the user can re-add, a forged opt-in mails somebody
+    who asked not to be mailed.
     """
-    return _opt_out(db, email, sig)
+    request = unsubscribe_service.verify(email, sig)
+    if (action or "").strip().lower() == "resubscribe":
+        if not request.signed:
+            return HTMLResponse(_page("refused", request.address), status_code=403)
+        restored = opt_out.restore(db, request.address)
+        if restored:
+            db.commit()
+        logger.info(
+            "unsubscribe: %s re-subscribed via a signed link (%d contact rows)",
+            mask_email(request.address),
+            restored,
+        )
+        return HTMLResponse(_page("resubscribed", request.address))
+    _opt_out(db, request)
+    return HTMLResponse(
+        _page("unsubscribed", request.address, signed=request.signed)
+    )
