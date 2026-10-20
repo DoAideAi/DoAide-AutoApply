@@ -1908,7 +1908,7 @@ def test_a_tracked_recruiter_reply_carries_no_unsubscribe_link(
 
 
 def test_the_sender_still_footers_cold_outreach(
-    db_session, current_user, connected_gmail, capture_raw_send,
+    db_session, current_user, connected_gmail, capture_raw_send, monkeypatch,
 ):
     """The counterpart. Nothing here weakens CAN-SPAM on mail we initiate.
 
@@ -1944,12 +1944,15 @@ def test_the_sender_still_footers_cold_outreach(
     db_session.add(email)
     db_session.commit()
 
+    monkeypatch.setattr(
+        settings, "compliance_physical_address", "12 MG Road, Bengaluru 560001"
+    )
     assert email_tasks.send_outreach_email(email.id)["status"] == "sent"
 
     sent = _sent_text(capture_raw_send[0])
     assert "unsubscribe" in sent.lower()
     assert "List-Unsubscribe" in sent
-    assert settings.compliance_physical_address in sent
+    assert "12 MG Road, Bengaluru 560001" in sent
 
 
 # --------------------------------------------------------------------------- #

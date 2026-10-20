@@ -650,14 +650,37 @@ def canspam_footer(unsubscribe_url: str) -> str:
     ``--`` is also the RFC 3676 §4.3 signature separator, which is what this
     line has always been for: clients that understand the convention set the
     trailing block apart on their own.
+
+    The postal-address line is printed only when one is configured — see
+    :func:`footer_postal_address`.
     """
-    return (
+    footer = (
         "--\n"
         "You are receiving this because your company's careers page lists this "
         "address for hiring enquiries. If you'd prefer not to be contacted, "
-        f"unsubscribe here: {unsubscribe_url}\n"
-        f"{settings.compliance_physical_address}"
+        f"unsubscribe here: {unsubscribe_url}"
     )
+    address = footer_postal_address()
+    return f"{footer}\n{address}" if address else footer
+
+
+#: What ``config.py`` and ``.env.example`` ship for ``COMPLIANCE_PHYSICAL_ADDRESS``.
+#: A stand-in, not an address.
+PLACEHOLDER_POSTAL_ADDRESS = "123 Example St, Suite 100, San Francisco, CA 94105"
+
+
+def footer_postal_address() -> str:
+    """The postal address for the outreach footer, or ``""`` for none.
+
+    A deployment that never set ``COMPLIANCE_PHYSICAL_ADDRESS`` used to print
+    the placeholder under every cold email — a made-up San Francisco street
+    signed beneath a job seeker's personal Gmail. An address that is plainly
+    not the sender's is worse than none: it is the sort of mismatch filters and
+    recipients read as bulk mail, and it is not a compliant address either. So
+    the placeholder counts as unset, and an unset address leaves the line out.
+    """
+    address = " ".join((settings.compliance_physical_address or "").split())
+    return "" if address == PLACEHOLDER_POSTAL_ADDRESS else address
 
 
 # Everything a header value may not contain. CR and LF are the ones that matter
