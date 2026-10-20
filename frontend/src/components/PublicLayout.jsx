@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Link } from "react-router-dom";
 import Logo from "./ui/Logo";
+import ThemeToggle from "./ThemeToggle";
 
 export default function PublicLayout({ title, description, jsonLd, children }) {
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function PublicLayout({ title, description, jsonLd, children }) {
           <nav className="flex items-center gap-4 text-sm">
             <Link to="/tools" className="text-ink-500 hover:text-ink-900 transition-colors no-underline">Tools</Link>
             <Link to="/blog" className="text-ink-500 hover:text-ink-900 transition-colors no-underline">Blog</Link>
+            <ThemeToggle className="hidden sm:inline-flex" />
             <Link to="/" className="rounded-lg bg-brand-500 px-4 py-1.5 text-sm font-medium text-white no-underline hover:bg-brand-600 transition-colors">
               Get Started
             </Link>

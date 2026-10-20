@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import Logo from "./ui/Logo";
+import ThemeToggle from "./ThemeToggle";
 import { api } from "../lib/api";
 import { onCountsChanged } from "../lib/events";
 
@@ -43,6 +44,7 @@ export default function Shell({ children }) {
             <span className="hidden font-mono text-xs text-ink-400 lg:block">
               {user?.email}
             </span>
+            <ThemeToggle className="hidden sm:inline-flex" />
             <button
               className="btn-quiet hidden sm:inline-flex"
               onClick={() => {
@@ -74,6 +76,10 @@ export default function Shell({ children }) {
                 {tab.label}
               </MobileTab>
             ))}
+            <div className="mt-1 flex items-center justify-between px-3 py-2">
+              <span className="text-sm text-ink-400">Theme</span>
+              <ThemeToggle />
+            </div>
             <button
               className="mt-1 block w-full rounded-md px-3 py-2.5 text-left text-sm text-ink-400 hover:bg-paper hover:text-ink-900"
               onClick={() => {
