@@ -634,8 +634,8 @@ def _service(account):
     return build("gmail", "v1", credentials=_credentials(account), cache_discovery=False)
 
 
-def canspam_footer(unsubscribe_url: str) -> str:
-    """Build the CAN-SPAM compliant footer (physical address + opt-out).
+def canspam_footer(unsubscribe_url: str, sender_name: str | None = None) -> str:
+    """Build the opt-out footer for unsolicited mail: the opt-out, then who sent it.
 
     The separator is two ASCII hyphens and not an em dash, and that is a
     deliverability decision rather than a typographic one. This footer is
@@ -651,36 +651,56 @@ def canspam_footer(unsubscribe_url: str) -> str:
     line has always been for: clients that understand the convention set the
     trailing block apart on their own.
 
-    The postal-address line is printed only when one is configured — see
-    :func:`footer_postal_address`.
+    The last line names the sender — the person whose mailbox this is (see
+    :func:`footer_identity`) — and nothing of this product's: no DoAide name,
+    address or link. The only URL is the opt-out, which RFC 8058 one-click
+    requires to be the endpoint that honours it.
     """
     footer = (
-        "--\n"
-        "You are receiving this because your company's careers page lists this "
+        f"{FOOTER_SEPARATOR}\n"
+        f"{FOOTER_LEAD_IN} your company's careers page lists this "
         "address for hiring enquiries. If you'd prefer not to be contacted, "
         f"unsubscribe here: {unsubscribe_url}"
     )
-    address = footer_postal_address()
-    return f"{footer}\n{address}" if address else footer
+    identity = footer_identity(sender_name)
+    return f"{footer}\n{identity}" if identity else footer
 
 
-#: What ``config.py`` and ``.env.example`` ship for ``COMPLIANCE_PHYSICAL_ADDRESS``.
-#: A stand-in, not an address.
-PLACEHOLDER_POSTAL_ADDRESS = "123 Example St, Suite 100, San Francisco, CA 94105"
+FOOTER_SEPARATOR = "--"
+FOOTER_LEAD_IN = "You are receiving this because"
 
+def footer_identity(sender_name: str | None) -> str:
+    """The footer's sender line: whoever owns the sending mailbox.
 
-def footer_postal_address() -> str:
-    """The postal address for the outreach footer, or ``""`` for none.
-
-    A deployment that never set ``COMPLIANCE_PHYSICAL_ADDRESS`` used to print
-    the placeholder under every cold email — a made-up San Francisco street
-    signed beneath a job seeker's personal Gmail. An address that is plainly
-    not the sender's is worse than none: it is the sort of mismatch filters and
-    recipients read as bulk mail, and it is not a compliant address either. So
-    the placeholder counts as unset, and an unset address leaves the line out.
+    Outreach goes from the job seeker's own Gmail, so the identity under it is
+    theirs. The deployment's ``COMPLIANCE_PHYSICAL_ADDRESS`` is deliberately not
+    used here: it is the operator's address, and printing it under a
+    candidate's name signed their personal mail with someone else's identity —
+    as production did with the config placeholder, a made-up San Francisco
+    street, on every cold email. A mismatch like that is what filters and
+    recipients read as bulk mail.
     """
-    address = " ".join((settings.compliance_physical_address or "").split())
-    return "" if address == PLACEHOLDER_POSTAL_ADDRESS else address
+    return " ".join((sender_name or "").split())
+
+
+def without_footer(body_text: str) -> str:
+    """*body_text* with any footer of ours already in it removed.
+
+    The footer is appended at send time and never stored on the row, so the
+    only way a message carries two is a body that already holds one: an earlier
+    sent message pasted into a draft, or a composer quoting one. Cut from the
+    separator line that opens it, in either the current ``--`` form or the em
+    dash it was written with before. Quoted text (``> --``) is left alone.
+    """
+    match = _FOOTER_START.search(body_text or "")
+    if match is None:
+        return body_text
+    return body_text[: match.start()].rstrip()
+
+
+_FOOTER_START = re.compile(
+    rf"^(?:--|\u2014)[ \t]*\r?\n{re.escape(FOOTER_LEAD_IN)}\b", re.MULTILINE
+)
 
 
 # Everything a header value may not contain. CR and LF are the ones that matter
@@ -1044,7 +1064,13 @@ def send_email(
         )
     service = _service(account)
     if footer is None:
-        footer = canspam_footer(unsubscribe_url) if unsubscribe_url else ""
+        footer = (
+            canspam_footer(unsubscribe_url, account.display_name)
+            if unsubscribe_url
+            else ""
+        )
+    if footer:
+        body_text = without_footer(body_text)
     raw = _build_mime(
         account.email,
         to,

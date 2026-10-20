@@ -376,6 +376,37 @@ def evaluate(
     return SendDecision(True, day_limit=day_limit)
 
 
+def spacing_wait(
+    account: GmailAccount | None, *, now: datetime | None = None
+) -> timedelta | None:
+    """How long *account* must still wait before its next send, or ``None``.
+
+    Every dispatcher spaces its own batch — a campaign trickles at a random
+    ``MIN_SEND_INTERVAL_SECONDS``..``MAX_SEND_INTERVAL_SECONDS`` apart — but
+    each one counts from zero, so nothing spaced sends *across* them. Two
+    campaigns resumed together, or a follow-up sweep landing mid-campaign, put
+    two messages out of one personal mailbox within the same second, which is
+    the burst pattern the per-batch spacing exists to avoid.
+
+    ``last_used_at`` is stamped by :func:`record_send` and nothing else, so it
+    is exactly "the last time this mailbox sent". Kept out of :func:`evaluate`
+    on purpose: that function also answers the autopilot preflight, and "wait
+    a minute" is not a reason to tell anybody sending is blocked.
+    """
+    if account is None:
+        return None
+    last = _aware(account.last_used_at)
+    if last is None:
+        return None
+    now = now or datetime.now(UTC)
+    gap = timedelta(seconds=max(0, settings.min_send_interval_seconds))
+    remaining = (last + gap) - now
+    # A `last_used_at` in the future is clock skew, not a reason to wait a day.
+    if remaining <= timedelta(0) or remaining > gap:
+        return None
+    return remaining
+
+
 def record_send(account: GmailAccount, *, now: datetime | None = None) -> None:
     """Book a successful send: bump the counters and start the warm-up clock.
 

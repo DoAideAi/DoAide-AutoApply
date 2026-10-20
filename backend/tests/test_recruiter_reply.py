@@ -1939,20 +1939,34 @@ def test_the_sender_still_footers_cold_outreach(
         status=EmailStatus.QUEUED,
         to_address="cold@acme.com",
         subject="Hello",
-        body_text="Hi Sam, I'd love to talk.",
+        # Carries a stale footer, as a pasted earlier message would.
+        body_text=(
+            "Hi Sam, I'd love to talk.\n\n--\nYou are receiving this because "
+            "your company's careers page lists this address.\nSomeone Else"
+        ),
     )
     db_session.add(email)
     db_session.commit()
 
+    # The operator's address is not the candidate's and must not sign their mail.
     monkeypatch.setattr(
         settings, "compliance_physical_address", "12 MG Road, Bengaluru 560001"
     )
+    monkeypatch.setattr(settings, "email_tracking_enabled", True)
     assert email_tasks.send_outreach_email(email.id)["status"] == "sent"
 
     sent = _sent_text(capture_raw_send[0])
     assert "unsubscribe" in sent.lower()
     assert "List-Unsubscribe" in sent
-    assert "12 MG Road, Bengaluru 560001" in sent
+    assert "12 MG Road" not in sent
+    assert "Someone Else" not in sent
+    message = message_from_bytes(base64.urlsafe_b64decode(capture_raw_send[0]["raw"]))
+    parts = [p for p in message.walk() if p.get_content_maintype() == "text"]
+    assert {p.get_content_type() for p in parts} == {"text/plain", "text/html"}
+    for part in parts:
+        body = part.get_payload(decode=True).decode("utf-8")
+        assert body.count("You are receiving this because") == 1
+        assert connected_gmail.display_name in body
 
 
 # --------------------------------------------------------------------------- #

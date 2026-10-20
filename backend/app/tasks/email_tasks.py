@@ -591,6 +591,25 @@ def _send_outreach_email(self, email_id: int) -> dict:
                     "status": "held",
                     "reason": decision.reason,
                 }
+        # Pacing across dispatchers: one mailbox never sends twice inside
+        # `MIN_SEND_INTERVAL_SECONDS`, whichever campaign or sweep queued the
+        # message. See `reputation_service.spacing_wait`. An answer to a
+        # recruiter who wrote first is exempt — it is one conversation, already
+        # jittered by its producer, and often a person waiting on "Send".
+        wait = (
+            None
+            if _answers_the_recruiter(db, email)
+            else reputation_service.spacing_wait(account)
+        )
+        if wait is not None and settings.celery_enabled:
+            countdown = int(wait.total_seconds()) + random.randint(5, 30)
+            # Re-published rather than `self.retry`: that budget belongs to the
+            # reputation gate, and a minute's spacing must not spend it. The
+            # stamp tells the stranded-row sweep a live task is aiming here.
+            send_outreach_email.apply_async(args=[email_id], countdown=countdown)
+            email.send_dispatched_at = datetime.now(UTC)
+            db.commit()
+            return {"email_id": email_id, "status": "deferred", "countdown": countdown}
         # A reply to mail the recruiter sent *us* carries no opt-out footer and
         # no List-Unsubscribe headers. CAN-SPAM governs commercial messages we
         # initiate; answering someone who wrote to us first is not that, and
@@ -622,9 +641,17 @@ def _send_outreach_email(self, email_id: int) -> dict:
         if settings.email_tracking_enabled:
             token = email_tracking.ensure_token(email)
             body_html = email_tracking.build_tracked_html(
-                email.body_text or "",
+                # The same footer, once, in both parts — see
+                # `gmail_service.without_footer`.
+                gmail_service.without_footer(email.body_text or "")
+                if unsub
+                else email.body_text or "",
                 token,
-                footer=gmail_service.canspam_footer(unsub) if unsub else "",
+                footer=(
+                    gmail_service.canspam_footer(unsub, account.display_name)
+                    if unsub
+                    else ""
+                ),
                 unsubscribe_url=unsub,
             )
         try:

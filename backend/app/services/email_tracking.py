@@ -156,10 +156,9 @@ def _should_wrap(url: str, unsubscribe_url: str | None, *, in_body: bool) -> boo
     So a URL in the footer was wrapped into a tracking link and then refused by
     the endpoint it pointed at: the recipient landed on this product's own
     front page instead of wherever the link said, from a message we sent them.
-    ``canspam_footer`` interpolates ``COMPLIANCE_PHYSICAL_ADDRESS`` verbatim,
-    and a compliance line that names the sender's website — an ordinary way to
-    write one — is a dead link in every piece of cold outreach the deployment
-    sends.
+    ``canspam_footer`` interpolates the sender's identity line verbatim, and
+    one that names the sender's website — an ordinary way to write one — would
+    be a dead link in every piece of cold outreach the deployment sends.
 
     Not wrapped rather than newly allowed, because the footer is the same on
     every message: a click on it measures nothing about this email, and the
