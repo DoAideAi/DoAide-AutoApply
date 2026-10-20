@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.models.recruiter import Recruiter
 from app.models.user import User
-from app.services import bounce_service
+from app.services import bounce_service, email_verification
 from app.services.career_scraper import Contact, get_or_scrape
 from app.services.openrouter_client import (
     OpenRouterError,
@@ -281,13 +281,21 @@ def best_recruiter_for_company(
         if bounce_service.is_suppressed(row):
             undeliverable += 1
             continue
+        # Before any tailoring, cover letter or composition is spent on it:
+        # malformed, disposable, bounced for another user, or a domain that
+        # takes no mail. Guessed ``careers@`` on a parked domain lands here.
+        dead = email_verification.is_undeliverable(db, row)
+        db.commit()  # the verdict is stored either way
+        if dead:
+            undeliverable += 1
+            continue
         return row, None
 
     if undeliverable:
         # Named separately so the run's notes distinguish "we couldn't find
         # anyone good" from "the people we know about are undeliverable", which
         # are different problems with different remedies.
-        return None, f"every known contact at {company} has hard-bounced"
+        return None, f"every known contact at {company} is undeliverable"
     return None, "no contact met the quality bar"
 
 
@@ -328,6 +336,9 @@ def discover_for_companies(
         # each, and the round trips were the bulk of what discovery spent on the
         # database.
         addresses = [c.email.lower() for c in wanted]
+        # One concurrent DNS round for the company's domains rather than one
+        # per contact as the loop below reaches them.
+        email_verification.prefetch_domains(addresses)
         rows = {
             row.email: row
             for row in db.scalars(
@@ -350,9 +361,11 @@ def discover_for_companies(
                 and not row.opted_out
                 and not row.is_excluded
                 and not bounce_service.is_suppressed(row)
+                and not email_verification.is_undeliverable(db, row)
             ):
                 created.append(row.id)
                 seen.add(row.id)
+        db.commit()  # stored verification verdicts
 
         if added == 0:
             notes.append(f"{company}: contacts already in your list")

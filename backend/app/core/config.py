@@ -766,6 +766,22 @@ class Settings(BaseSettings):
     # Cap on contacts auto-imported per company so one careers page can't flood a campaign.
     max_contacts_per_company: int = 5
 
+    # ---- Recipient verification (services/email_verification.py) ----
+    # Whether the recipient's domain is asked if it accepts mail (MX, then the
+    # RFC 5321 A/AAAA fallback) before anything is composed for or sent to it.
+    # Off in the test suite, which must not touch DNS.
+    email_mx_check_enabled: bool = True
+    # A lookup that can't finish in this long is "unknown", and unknown sends:
+    # a slow resolver is our problem, not evidence the recipient is dead.
+    email_mx_timeout_seconds: float = 3.0
+    # How long a domain's answer is reused. Shorter for "no mail" so a domain
+    # that was mid-migration gets another chance the same day.
+    email_mx_cache_ttl_seconds: int = 24 * 3600
+    email_mx_negative_cache_ttl_seconds: int = 3600
+    # A recruiter's stored verdict is trusted for this long before it is
+    # re-checked. A hard bounce since then always forces a re-check.
+    email_verification_ttl_days: int = 7
+
     # ---- Dead letters ----
     # How long a *resolved* failure is kept — one an administrator replayed or
     # consciously ignored. The decision has been made; what remains is the audit

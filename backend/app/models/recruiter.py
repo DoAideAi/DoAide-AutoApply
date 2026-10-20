@@ -39,6 +39,22 @@ class DeliveryState(str, enum.Enum):
     HARD_BOUNCED = "HARD_BOUNCED"    # permanent failure; never send again
 
 
+class EmailVerification(str, enum.Enum):
+    """Whether the address looked deliverable *before* anything was sent to it.
+
+    The pre-send counterpart of ``DeliveryState``, which only learns from a
+    bounce after the damage is done. Set by ``services/email_verification.py``:
+    syntax, disposable domain, a previous hard bounce, and whether the domain
+    accepts mail at all. It cannot prove a mailbox exists — only that nothing
+    already says it doesn't.
+    """
+
+    UNVERIFIED = "UNVERIFIED"        # never checked
+    DELIVERABLE = "DELIVERABLE"      # passed every check
+    UNDELIVERABLE = "UNDELIVERABLE"  # failed one; never composed for or sent to
+    UNKNOWN = "UNKNOWN"              # DNS couldn't answer; treated as sendable
+
+
 class Recruiter(Base, TimestampMixin):
     __tablename__ = "recruiters"
     __table_args__ = (
@@ -100,6 +116,17 @@ class Recruiter(Base, TimestampMixin):
     last_bounce_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     # Shown in the tracker, so "why did this thread stop?" has an answer.
     last_bounce_reason: Mapped[str | None] = mapped_column(String(500))
+
+    # ---- Pre-send verification (see services/email_verification.py) ----
+    email_verification: Mapped[EmailVerification] = mapped_column(
+        SAEnum(EmailVerification, native_enum=False, length=16),
+        default=EmailVerification.UNVERIFIED,
+        server_default=EmailVerification.UNVERIFIED.value,
+        nullable=False,
+        index=True,
+    )
+    email_verified_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    email_verification_reason: Mapped[str | None] = mapped_column(String(255))
 
     # IANA zone for send-time optimization, resolved once from the company's
     # researched headquarters / the posting / the address TLD and cached here.

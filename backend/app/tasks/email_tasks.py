@@ -29,6 +29,7 @@ from app.services import (
     bounce_service,
     email_attachments,
     email_tracking,
+    email_verification,
     gmail_accounts,
     gmail_service,
     opt_out,
@@ -540,6 +541,32 @@ def _send_outreach_email(self, email_id: int) -> dict:
                 "status": "failed",
                 "reason": "address previously hard-bounced",
             }
+
+        # Pre-send verification: malformed, disposable, bounced for anyone, or
+        # a domain that takes no mail. Checked against what is actually on the
+        # To: line, and stored on the contact so the composer stops offering
+        # it. An answer to a recruiter who wrote to us first is exempt — their
+        # mail arriving is better evidence than any lookup, and a disposable
+        # address that is talking to the candidate deserves its reply.
+        if not _answers_the_recruiter(db, email):
+            to_address = (email.to_address or "").strip()
+            if recruiter is not None and recruiter.email.lower() == to_address.lower():
+                verdict = email_verification.ensure_verified(db, recruiter)
+            else:
+                verdict = email_verification.verify_address(db, to_address, recruiter)
+            if not verdict.sendable:
+                reason = f"Not sent — the address looks undeliverable: {verdict.reason}"
+                logger.warning(
+                    "email %s skipped: recipient undeliverable (%s)", email_id, verdict.reason
+                )
+                _fail_send(db, email, reason)
+                db.commit()
+                _emit_failed(email, reason)
+                return {
+                    "email_id": email_id,
+                    "status": "failed",
+                    "reason": "recipient undeliverable",
+                }
 
         # The mailbox this conversation belongs to — not simply the user's
         # primary. A reply to a recruiter who wrote to the candidate's second

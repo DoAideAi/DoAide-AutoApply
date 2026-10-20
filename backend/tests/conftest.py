@@ -27,6 +27,9 @@ os.environ.setdefault("FORM_APPLY_SCREENSHOTS", "false")
 # production and off here, so the suite stays offline; test_ats_boards.py turns it
 # on with a stubbed session, which is the only place it should ever be on.
 os.environ.setdefault("ATS_BOARD_DISCOVERY_ENABLED", "false")
+# Recipient verification resolves MX records before a send. Off here so the
+# suite never touches DNS; test_email_verification.py stubs the resolver.
+os.environ.setdefault("EMAIL_MX_CHECK_ENABLED", "false")
 os.environ.setdefault(
     "FORM_APPLY_ARTIFACT_DIR", tempfile.mkdtemp(prefix="talentping-artifacts-")
 )
