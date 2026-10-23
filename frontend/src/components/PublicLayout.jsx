@@ -1,13 +1,28 @@
 import { useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import Logo from "./ui/Logo";
 import ThemeToggle from "./ThemeToggle";
+import { applyMeta } from "../seo/head";
+import { HOME_META, metaFor } from "../seo/routes";
 
-export default function PublicLayout({ title, description, jsonLd, children }) {
+export default function PublicLayout({ title, description, jsonLd, noindex = false, children }) {
+  const { pathname } = useLocation();
+
+  // A known route takes its head from seo/routes — the same values the build
+  // baked into its HTML, so the rendered page and the crawled one agree. Pages
+  // with no entry (an unknown article, the 404) fall back to their props and
+  // are kept out of the index.
   useEffect(() => {
-    if (title) document.title = `${title} | DoAide AutoApply`;
-    return () => { document.title = "DoAide AutoApply"; };
-  }, [title]);
+    const route = noindex ? null : metaFor(pathname.replace(/(.)\/+$/, "$1"));
+    applyMeta({
+      path: route?.path ?? null,
+      title: route?.title ?? title,
+      description: route?.description ?? description ?? HOME_META.description,
+      ogType: route?.ogType,
+      noindex: noindex || !route,
+    });
+    return () => applyMeta(HOME_META);
+  }, [pathname, title, description, noindex]);
 
   useEffect(() => {
     if (!jsonLd) return;
@@ -15,7 +30,7 @@ export default function PublicLayout({ title, description, jsonLd, children }) {
     script.type = "application/ld+json";
     script.textContent = JSON.stringify(jsonLd);
     document.head.appendChild(script);
-    return () => { document.head.removeChild(script); };
+    return () => script.remove();
   }, [jsonLd]);
 
   return (

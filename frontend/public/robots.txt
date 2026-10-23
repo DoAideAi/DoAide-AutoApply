@@ -1,7 +1,11 @@
 User-agent: *
 Allow: /
-Allow: /tools/
-Allow: /blog/
-Allow: /embed
+# The signed-in app: nothing to index, and every URL renders a redirect.
+Disallow: /pipeline
+Disallow: /jobs
+Disallow: /inbox
+Disallow: /setup
+Disallow: /tailor
+Disallow: /auth/
 
 Sitemap: https://job.doaide.com/sitemap.xml
