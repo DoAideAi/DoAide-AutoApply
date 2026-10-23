@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
+import { api } from "../lib/api";
 import DoAideFooter from "../components/DoAideFooter";
 import ThemeToggle from "../components/ThemeToggle";
 import Logo from "../components/ui/Logo";
@@ -223,8 +224,28 @@ const inputClass =
   "w-full rounded-lg border border-white/[0.12] bg-[#0A0A0B]/60 px-3.5 py-2.5 text-sm text-white transition-colors placeholder:text-white/35 focus:border-teal-400 focus:outline-none focus:ring-1 focus:ring-teal-400";
 const labelClass = "mb-1.5 block text-sm font-medium text-white/80";
 
+// What the SSO callbacks put in `?error=` when they send someone back here.
+const SSO_ERRORS = {
+  google_auth_failed: "Google sign-in didn't complete. Please try again.",
+  github_auth_failed: "GitHub sign-in didn't complete. Please try again.",
+  microsoft_auth_failed: "Microsoft sign-in didn't complete. Please try again.",
+  no_email: "Your account didn't share an email address, so we couldn't sign you in.",
+  account_deactivated: "This account has been deactivated.",
+};
+
+function takeSsoError() {
+  const params = new URLSearchParams(window.location.search);
+  const code = params.get("error");
+  if (!code) return null;
+  params.delete("error");
+  const query = params.toString();
+  window.history.replaceState(null, "", window.location.pathname + (query ? `?${query}` : "") + window.location.hash);
+  return SSO_ERRORS[code] || "Sign-in didn't complete. Please try again.";
+}
+
 const SSO = [
   {
+    id: "google",
     name: "Google",
     href: "/api/v1/auth/sso/google",
     icon: (
@@ -237,6 +258,7 @@ const SSO = [
     ),
   },
   {
+    id: "github",
     name: "GitHub",
     href: "/api/v1/auth/sso/github",
     icon: (
@@ -246,6 +268,7 @@ const SSO = [
     ),
   },
   {
+    id: "microsoft",
     name: "Microsoft",
     href: "/api/v1/auth/sso/microsoft",
     icon: (
@@ -265,8 +288,21 @@ export function AuthCard({ initialMode = "signin" }) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [error, setError] = useState(null);
+  const [error, setError] = useState(takeSsoError);
   const [busy, setBusy] = useState(false);
+  // Only providers the server has credentials for: an unconfigured one answers 501.
+  const [sso, setSso] = useState([]);
+
+  useEffect(() => {
+    let live = true;
+    api
+      .ssoProviders()
+      .then((res) => live && setSso(SSO.filter((p) => res.providers?.includes(p.id))))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
 
   const signingUp = mode === "signup";
 
@@ -394,24 +430,28 @@ export function AuthCard({ initialMode = "signin" }) {
         </button>
       </form>
 
-      <div className="my-5 flex items-center gap-3 text-xs text-white/40">
-        <span className="h-px flex-1 bg-white/[0.08]" />
-        or continue with
-        <span className="h-px flex-1 bg-white/[0.08]" />
-      </div>
+      {sso.length > 0 && (
+        <>
+          <div className="my-5 flex items-center gap-3 text-xs text-white/40">
+            <span className="h-px flex-1 bg-white/[0.08]" />
+            or continue with
+            <span className="h-px flex-1 bg-white/[0.08]" />
+          </div>
 
-      <div className="grid grid-cols-3 gap-2">
-        {SSO.map((p) => (
-          <a
-            key={p.name}
-            href={p.href}
-            className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.03] px-2 py-2 text-xs font-medium text-white/80 no-underline transition-colors hover:border-teal-400/50 hover:bg-white/[0.06] hover:text-white"
-          >
-            {p.icon}
-            {p.name}
-          </a>
-        ))}
-      </div>
+          <div className={`grid gap-2 ${sso.length === 1 ? "grid-cols-1" : sso.length === 2 ? "grid-cols-2" : "grid-cols-3"}`}>
+            {sso.map((p) => (
+              <a
+                key={p.name}
+                href={p.href}
+                className="flex items-center justify-center gap-2 rounded-lg border border-white/[0.1] bg-white/[0.03] px-2 py-2 text-xs font-medium text-white/80 no-underline transition-colors hover:border-teal-400/50 hover:bg-white/[0.06] hover:text-white"
+              >
+                {p.icon}
+                {p.name}
+              </a>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

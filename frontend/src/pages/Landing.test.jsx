@@ -3,9 +3,11 @@ import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import Landing from "./Landing";
+import { api } from "../lib/api";
 
 const auth = { user: null, loading: false, login: vi.fn(), register: vi.fn() };
 vi.mock("../hooks/useAuth", () => ({ useAuth: () => auth }));
+vi.mock("../lib/api", () => ({ api: { ssoProviders: vi.fn() } }));
 
 function renderLanding() {
   return render(
@@ -17,6 +19,7 @@ function renderLanding() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  api.ssoProviders.mockResolvedValue({ providers: ["google", "github", "microsoft"] });
   auth.user = null;
   auth.loading = false;
   window.matchMedia = vi.fn(() => ({
@@ -109,10 +112,32 @@ describe("Landing", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent("Incorrect email or password");
   });
 
-  it("offers Google, GitHub and Microsoft sign-in", () => {
+  it("offers every configured SSO provider", async () => {
     renderLanding();
-    expect(screen.getByRole("link", { name: "Google" })).toHaveAttribute("href", "/api/v1/auth/sso/google");
+    expect(await screen.findByRole("link", { name: "Google" })).toHaveAttribute("href", "/api/v1/auth/sso/google");
     expect(screen.getByRole("link", { name: "GitHub" })).toHaveAttribute("href", "/api/v1/auth/sso/github");
     expect(screen.getByRole("link", { name: "Microsoft" })).toHaveAttribute("href", "/api/v1/auth/sso/microsoft");
+  });
+
+  it("hides SSO providers the server has not configured", async () => {
+    api.ssoProviders.mockResolvedValue({ providers: ["google"] });
+    renderLanding();
+    expect(await screen.findByRole("link", { name: "Google" })).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "GitHub" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Microsoft" })).not.toBeInTheDocument();
+  });
+
+  it("shows no SSO section when no provider is configured", async () => {
+    api.ssoProviders.mockResolvedValue({ providers: [] });
+    renderLanding();
+    await Promise.resolve();
+    expect(screen.queryByText("or continue with")).not.toBeInTheDocument();
+  });
+
+  it("explains an SSO failure the callback sent back", () => {
+    window.history.replaceState(null, "", "/?error=google_auth_failed");
+    renderLanding();
+    expect(screen.getByRole("alert")).toHaveTextContent("Google sign-in didn't complete");
+    expect(window.location.search).toBe("");
   });
 });

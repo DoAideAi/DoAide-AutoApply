@@ -96,6 +96,7 @@ async function requestBlob(path) {
 
 export const api = {
   // ---- auth ----
+  ssoProviders: () => request("/auth/sso/providers", { auth: false }),
   register: (email, password, full_name) =>
     request("/auth/register", {
       method: "POST",
@@ -114,6 +115,10 @@ export const api = {
   // ---- onboarding / gmail ----
   onboarding: () => request("/onboarding"),
   gmailStatus: () => request("/gmail/status"),
+  gmailAIConsent: () => request("/gmail/ai-consent"),
+  setGmailAIConsent: (enabled, version) => request("/gmail/ai-consent", {
+    method: "PUT", body: { enabled, version },
+  }),
   gmailAuthorize: () => request("/gmail/authorize"),
   gmailDisconnect: (id) => request(`/gmail/accounts/${id}`, { method: "DELETE" }),
   // Push notifications: replies land in seconds instead of on the poll cycle.

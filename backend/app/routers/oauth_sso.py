@@ -25,11 +25,21 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 
 oauth = OAuth()
 
-if settings.sso_google_client_id:
+# Sign-in needs only ``openid email profile``, which any Google client may ask
+# for, so a deployment without a dedicated SSO client reuses the Gmail one. Its
+# redirect URIs must then include ``/auth/sso/google/callback`` as well.
+GOOGLE_SSO_CLIENT_ID = settings.sso_google_client_id or settings.google_client_id
+GOOGLE_SSO_CLIENT_SECRET = (
+    settings.sso_google_client_secret
+    if settings.sso_google_client_id
+    else settings.google_client_secret
+)
+
+if GOOGLE_SSO_CLIENT_ID:
     oauth.register(
         name="google",
-        client_id=settings.sso_google_client_id,
-        client_secret=settings.sso_google_client_secret,
+        client_id=GOOGLE_SSO_CLIENT_ID,
+        client_secret=GOOGLE_SSO_CLIENT_SECRET,
         server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
         client_kwargs={"scope": "openid email profile"},
     )
@@ -58,6 +68,17 @@ FRONTEND_URL = settings.frontend_url
 
 _oauth_initiate_limit = ip_rate_limit(30, 60, scope="sso_initiate")
 _oauth_callback_limit = ip_rate_limit(30, 60, scope="sso_callback")
+
+
+@router.get("/sso/providers", summary="List the SSO providers this deployment offers")
+def sso_providers() -> dict[str, list[str]]:
+    """Which sign-in buttons work here, so the SPA shows only those."""
+    enabled = {
+        "google": bool(GOOGLE_SSO_CLIENT_ID),
+        "github": bool(settings.github_client_id),
+        "microsoft": bool(settings.microsoft_client_id),
+    }
+    return {"providers": [name for name, on in enabled.items() if on]}
 
 
 def _callback_url(provider: str) -> str:
@@ -129,7 +150,7 @@ def _complete_oauth_login(user: User | None, provider: str) -> RedirectResponse:
     dependencies=[Depends(_oauth_initiate_limit)],
 )
 async def google_login(request: Request):
-    if not settings.sso_google_client_id:
+    if not GOOGLE_SSO_CLIENT_ID:
         raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED, detail="Google SSO not configured")
     redirect_uri = _callback_url("google")
     return await oauth.google.authorize_redirect(request, redirect_uri)
@@ -141,7 +162,7 @@ async def google_login(request: Request):
     dependencies=[Depends(_oauth_callback_limit)],
 )
 async def google_callback(request: Request, db: Session = Depends(get_db)):
-    if not settings.sso_google_client_id:
+    if not GOOGLE_SSO_CLIENT_ID:
         raise HTTPException(status_code=status.HTTP_501_NOT_IMPLEMENTED)
     try:
         token = await oauth.google.authorize_access_token(request)
