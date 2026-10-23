@@ -1,0 +1,29 @@
+# job.doaide.com — the block in the shared Caddyfile on doaide-server
+# (docker container knol-caddy, /etc/caddy/Caddyfile). Kept here so the live
+# config has a reviewed source; apply by replacing the block there and running
+# `caddy validate` + `caddy reload` inside the container.
+job.doaide.com {
+	encode zstd gzip
+	@api path /api/* /privacy /terms
+	handle @api {
+		reverse_proxy 172.18.0.1:3095
+	}
+	handle {
+		reverse_proxy 172.18.0.1:3096
+	}
+	header {
+		Strict-Transport-Security "max-age=31536000; includeSubDomains"
+		X-Content-Type-Options nosniff
+		Referrer-Policy strict-origin-when-cross-origin
+		-Server
+	}
+	# Everything is unframeable except the free tools /embed gives out iframe
+	# code for; static-server.mjs sends frame-ancestors * on exactly those.
+	@unframeable not path /tools/resume-score /tools/resume-score/ /tools/salary-estimator /tools/salary-estimator/ /tools/cover-letter-generator /tools/cover-letter-generator/
+	header @unframeable X-Frame-Options DENY
+	log {
+		output stdout
+		format json
+		level INFO
+	}
+}
