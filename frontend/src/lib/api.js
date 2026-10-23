@@ -22,10 +22,58 @@ export function setToken(token) {
   }
 }
 
+export const SESSION_EXPIRED_EVENT = "autoapply:session-expired";
+
+/**
+ * A 401 on a request that carried a token means the session ended under us
+ * (expired, revoked, account closed). Dropping the token alone left the page
+ * mounted with a user it could no longer act for — every click failing with
+ * "Not authenticated" until a reload — so tell AuthProvider too. A 401 with no
+ * token (a wrong password at login) is just an answer, not an expiry.
+ */
+function handleUnauthorized(res, hadToken) {
+  if (res.status !== 401) return;
+  setToken(null);
+  if (hadToken) window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+}
+
+/** fetch, with a network failure turned into a sentence a person can act on. */
+async function send(url, init) {
+  try {
+    return await fetch(url, init);
+  } catch {
+    throw new Error("Can't reach DoAide AutoApply — check your connection and try again.");
+  }
+}
+
+/**
+ * The message for a failed response whose body was not FastAPI's JSON — the
+ * proxy's HTML 502 while the API restarts, an HTML 413 from an oversized
+ * upload. Parsing those as JSON used to surface "Unexpected token '<'".
+ */
+export function fallbackMessage(res) {
+  if ([502, 503, 504].includes(res.status)) {
+    return "The server is briefly unavailable — try again in a moment.";
+  }
+  if (res.status === 413) return "That upload is too large.";
+  if (res.status === 429) return "Too many requests — wait a minute and try again.";
+  return res.statusText || `Request failed (HTTP ${res.status})`;
+}
+
+function parseJson(text) {
+  if (!text) return null;
+  try {
+    return JSON.parse(text);
+  } catch {
+    return undefined;
+  }
+}
+
 async function request(path, { method = "GET", body, form, auth = true } = {}) {
   const headers = {};
   const token = getToken();
-  if (auth && token) headers["Authorization"] = `Bearer ${token}`;
+  const sendsToken = Boolean(auth && token);
+  if (sendsToken) headers["Authorization"] = `Bearer ${token}`;
 
   let payload;
   if (form) {
@@ -35,14 +83,12 @@ async function request(path, { method = "GET", body, form, auth = true } = {}) {
     payload = JSON.stringify(body);
   }
 
-  const res = await fetch(`${BASE}${path}`, { method, headers, body: payload });
+  const res = await send(`${BASE}${path}`, { method, headers, body: payload });
+  handleUnauthorized(res, sendsToken);
 
-  if (res.status === 401) setToken(null);
-
-  const text = await res.text();
-  const data = text ? JSON.parse(text) : null;
+  const data = parseJson(await res.text());
   if (!res.ok) {
-    const detail = data?.detail ?? res.statusText;
+    const detail = data?.detail ?? fallbackMessage(res);
     // FastAPI validation errors arrive as a list of {loc, msg} objects.
     const message = Array.isArray(detail)
       ? detail.map((d) => d.msg).join(", ")
@@ -51,6 +97,7 @@ async function request(path, { method = "GET", body, form, auth = true } = {}) {
         : JSON.stringify(detail);
     throw new Error(message);
   }
+  if (data === undefined) throw new Error("The server sent a response we couldn't read.");
   return data;
 }
 
@@ -60,10 +107,10 @@ async function requestText(path) {
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${path}`, { headers });
-  if (res.status === 401) setToken(null);
+  const res = await send(`${BASE}${path}`, { headers });
+  handleUnauthorized(res, Boolean(token));
   const text = await res.text();
-  if (!res.ok) throw new Error(text || res.statusText);
+  if (!res.ok) throw new Error(parseJson(text)?.detail ?? fallbackMessage(res));
   return text;
 }
 
@@ -79,15 +126,15 @@ async function requestBlob(path) {
   const token = getToken();
   if (token) headers["Authorization"] = `Bearer ${token}`;
 
-  const res = await fetch(`${BASE}${path}`, { headers });
-  if (res.status === 401) setToken(null);
+  const res = await send(`${BASE}${path}`, { headers });
+  handleUnauthorized(res, Boolean(token));
   if (!res.ok) {
     const text = await res.text();
-    let message = text || res.statusText;
+    let message = fallbackMessage(res);
     try {
       message = JSON.parse(text)?.detail ?? message;
     } catch {
-      // A non-JSON error body is already the best message we have.
+      // A non-JSON body (the proxy's HTML page) says less than the status does.
     }
     throw new Error(message);
   }

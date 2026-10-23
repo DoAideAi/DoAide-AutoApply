@@ -1,11 +1,15 @@
-import { createContext, useContext, useEffect, useState } from "react";
-import { api, getToken, setToken } from "../lib/api";
+import { createContext, useContext, useEffect, useRef, useState } from "react";
+import { useToast } from "../components/ui/Toast";
+import { SESSION_EXPIRED_EVENT, api, getToken, setToken } from "../lib/api";
 
 const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const toast = useToast();
+  const userRef = useRef(null);
+  userRef.current = user;
 
   useEffect(() => {
     if (!getToken()) {
@@ -18,6 +22,18 @@ export function AuthProvider({ children }) {
       .catch(() => setToken(null))
       .finally(() => setLoading(false));
   }, []);
+
+  // The API client drops the token on a 401; this drops the user with it, so
+  // <Protected> sends them to sign in instead of leaving a page that can no
+  // longer load anything.
+  useEffect(() => {
+    function expired() {
+      if (userRef.current) toast.error("Your session has expired — please sign in again.");
+      setUser(null);
+    }
+    window.addEventListener(SESSION_EXPIRED_EVENT, expired);
+    return () => window.removeEventListener(SESSION_EXPIRED_EVENT, expired);
+  }, [toast]);
 
   async function login(email, password) {
     await api.login(email, password);
