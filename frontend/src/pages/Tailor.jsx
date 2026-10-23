@@ -52,7 +52,9 @@ export default function Tailor() {
         setDescription(job.description || "");
         if (job.url) setUrl(job.url);
       })
-      .catch(() => {});
+      // Silence here left an empty form and no clue why the job didn't come
+      // through; saying so lets the user paste the description instead.
+      .catch((err) => setError(`Couldn't load that job (${err.message}). Paste its description below instead.`));
   }, [jobPostingId]);
 
   const canRun = Boolean(jobPostingId || description.trim() || url.trim());
