@@ -36,6 +36,7 @@ from app.routers import (
     notifications,
     oauth_sso,
     profiles,
+    public_tools,
     recruiter_inbox,
     recruiters,
     resumes,
@@ -203,6 +204,7 @@ def create_app() -> FastAPI:
     app.include_router(interview_prep.router, prefix=prefix)
     # Public: recipients' mail clients hit these, so no auth dependency.
     app.include_router(tracking.router, prefix=prefix)
+    app.include_router(public_tools.router, prefix=prefix)
 
     _static = Path(__file__).resolve().parent / "static"
 

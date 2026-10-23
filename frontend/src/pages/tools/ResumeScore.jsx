@@ -1,6 +1,7 @@
 import { useState } from "react";
 import PublicLayout from "../../components/PublicLayout";
 import ShareButtons from "../../components/ShareButtons";
+import { api } from "../../lib/api";
 
 const ACTION_VERBS = [
   "achieved","managed","led","developed","created","implemented","designed",
@@ -91,9 +92,30 @@ function ScoreGauge({ score }) {
 export default function ResumeScore() {
   const [text, setText] = useState("");
   const [result, setResult] = useState(null);
+  const [reading, setReading] = useState(false);
+  const [fileError, setFileError] = useState(null);
 
   function handleAnalyze() {
     setResult(analyze(text));
+  }
+
+  // Most people have a resume file, not its text on the clipboard; asking them
+  // to open it and copy everything out was the step where the tool lost them.
+  async function handleFile(e) {
+    const file = e.target.files?.[0];
+    e.target.value = "";
+    if (!file) return;
+    setFileError(null);
+    setReading(true);
+    try {
+      const { text: extracted } = await api.toolResumeText(file);
+      setText(extracted);
+      setResult(analyze(extracted));
+    } catch (err) {
+      setFileError(err.message);
+    } finally {
+      setReading(false);
+    }
   }
 
   const jsonLd = {
@@ -101,7 +123,7 @@ export default function ResumeScore() {
     "@type": "WebApplication",
     name: "ATS Resume Score Checker",
     url: "https://job.doaide.com/tools/resume-score",
-    description: "Free ATS resume compatibility checker. Paste your resume and get an instant score with actionable tips.",
+    description: "Free ATS resume compatibility checker. Upload or paste your resume and get an instant score with actionable tips.",
     applicationCategory: "BusinessApplication",
     operatingSystem: "Web",
     offers: { "@type": "Offer", price: "0", priceCurrency: "USD" },
@@ -111,9 +133,33 @@ export default function ResumeScore() {
     <PublicLayout title="Free ATS Resume Score Checker" jsonLd={jsonLd}>
       <div className="max-w-3xl mx-auto">
         <h1 className="text-3xl font-bold text-ink-900 mb-2">ATS Resume Score Checker</h1>
-        <p className="text-ink-500 mb-6">Paste your resume text below and get an instant ATS compatibility score with actionable tips.</p>
+        <p className="text-ink-500 mb-6">Upload your resume or paste its text below and get an instant ATS compatibility score with actionable tips.</p>
+
+        <div className="mb-4 flex flex-wrap items-center gap-3">
+          <label
+            htmlFor="resume-file"
+            className={`btn-primary cursor-pointer ${reading ? "pointer-events-none opacity-60" : ""}`}
+          >
+            {reading ? "Reading your resume…" : "Upload PDF or DOCX"}
+          </label>
+          <input
+            id="resume-file"
+            type="file"
+            accept=".pdf,.docx"
+            onChange={handleFile}
+            disabled={reading}
+            className="sr-only"
+          />
+          <span className="text-xs text-ink-400">Up to 5 MB. Not stored. Or paste the text below.</span>
+        </div>
+        {fileError && (
+          <p role="alert" className="mb-4 text-sm text-bad">
+            {fileError}
+          </p>
+        )}
 
         <textarea
+          aria-label="Resume text"
           value={text}
           onChange={(e) => setText(e.target.value)}
           rows={12}

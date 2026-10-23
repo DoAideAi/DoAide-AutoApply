@@ -142,6 +142,14 @@ async function requestBlob(path) {
 }
 
 export const api = {
+  // ---- public tools (signed out) ----
+  toolCoverLetter: (body) => request("/tools/cover-letter", { method: "POST", auth: false, body }),
+  toolResumeText: (file) => {
+    const form = new FormData();
+    form.append("file", file);
+    return request("/tools/resume-text", { method: "POST", auth: false, form });
+  },
+
   // ---- auth ----
   ssoProviders: () => request("/auth/sso/providers", { auth: false }),
   register: (email, password, full_name) =>
