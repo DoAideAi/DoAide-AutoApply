@@ -20,6 +20,12 @@ vi.mock("../lib/api", () => ({
     exportApplicationsCsv: vi.fn(),
     pauseCampaign: vi.fn(),
     resumeCampaign: vi.fn(),
+    listDirectJobs: vi.fn(),
+    importDirectJob: vi.fn(),
+    getDirectJob: vi.fn(),
+    rewriteDirectLetter: vi.fn(),
+    markDirectApplied: vi.fn(),
+    unmarkDirectApplied: vi.fn(),
   },
 }));
 

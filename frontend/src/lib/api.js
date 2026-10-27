@@ -360,6 +360,16 @@ export const api = {
   dismissRecruiterEmail: (id) =>
     request(`/recruiter-inbox/${id}/dismiss`, { method: "POST" }),
 
+  // ---- direct apply (a job on any company's site, by URL) ----
+  importDirectJob: (payload) =>
+    request("/direct-apply/import", { method: "POST", body: payload }),
+  listDirectJobs: () => request("/direct-apply"),
+  getDirectJob: (id) => request(`/direct-apply/${id}`),
+  rewriteDirectLetter: (id, force = false) =>
+    request(`/direct-apply/${id}/cover-letter`, { method: "POST", body: { force } }),
+  markDirectApplied: (id) => request(`/direct-apply/${id}/applied`, { method: "POST" }),
+  unmarkDirectApplied: (id) => request(`/direct-apply/${id}/applied`, { method: "DELETE" }),
+
   // ---- review queue ----
   review: () => request("/review"),
   approveDraft: (id) => request(`/review/emails/${id}/approve`, { method: "POST" }),

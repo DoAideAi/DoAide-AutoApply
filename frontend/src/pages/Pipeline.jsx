@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import DirectApply from "../components/DirectApply";
 import ErrorBanner from "../components/ui/ErrorBanner";
 import SkeletonLoader from "../components/ui/SkeletonLoader";
 import Tooltip from "../components/ui/Tooltip";
@@ -78,6 +79,9 @@ export default function Pipeline() {
       <ErrorBanner onDismiss={() => setError(null)}>{error}</ErrorBanner>
 
       <AutopilotBar onError={setError} toast={toast} />
+
+      {/* A job the candidate found themselves, on any company's site. */}
+      <DirectApply onError={setError} />
 
       <StatBar stats={stats} />
 
