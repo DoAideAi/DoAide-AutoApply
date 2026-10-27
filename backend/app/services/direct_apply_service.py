@@ -203,7 +203,11 @@ def import_job(
     posting in JavaScript: it replaces the fetched text, and a failed fetch is
     then only a missing apply link rather than an error.
 
-    Flushes but does not commit — the caller owns the transaction.
+    Not one transaction: :func:`smart_apply.score_and_save` commits (it
+    resolves a race with the nightly scan that way), and company research
+    commits its cache — so the posting and its fit score are stored before the
+    letter is written. The caller commits the rest; a rollback after a failure
+    leaves the posting without a letter, which the detail view handles.
     """
     url = _check_url(url)
     # Checked before anything is fetched or written: with no resume there is no
