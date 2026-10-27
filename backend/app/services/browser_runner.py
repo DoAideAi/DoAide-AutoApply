@@ -350,6 +350,12 @@ def browser_page(
             user_agent=user_agent or DEFAULT_USER_AGENT,
             viewport={"width": 1440, "height": 900},
             storage_state=storage_state,
+            # The adapters find controls by their English labels ("Easy Apply",
+            # "Submit application"). Left to itself the page follows the
+            # server's IP — the production box is in Helsinki, and LinkedIn
+            # answered in Finnish — and every button would go unfound.
+            locale="en-US",
+            extra_http_headers={"Accept-Language": "en-US,en;q=0.9"},
         )
         context.set_default_timeout(timeout_ms or settings.form_apply_timeout_ms)
         page = context.new_page()
