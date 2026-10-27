@@ -829,6 +829,48 @@ describe("Setup — step 3: mailbox and switch", () => {
     open.mockRestore();
   });
 
+  // Google's "This app is blocked" page never redirects to our callback, so all
+  // the app sees is the popup closing with no mailbox added.
+  it("explains a popup closed without connecting", async () => {
+    const user = userEvent.setup();
+    api.onboarding.mockResolvedValue(READY);
+    api.gmailAuthorize.mockResolvedValue({ authorization_url: "https://accounts.google" });
+    const popup = { closed: false };
+    const open = vi.spyOn(window, "open").mockReturnValue(popup);
+    renderSetup();
+
+    await user.click(await screen.findByRole("button", { name: /Connect Gmail/ }));
+    await waitFor(() => expect(open).toHaveBeenCalled());
+    popup.closed = true;
+
+    expect(
+      await screen.findByText(/This app is blocked/, {}, { timeout: 3000 }),
+    ).toBeInTheDocument();
+    open.mockRestore();
+  });
+
+  it("stays quiet when the popup closes after a mailbox was added", async () => {
+    const user = userEvent.setup();
+    api.onboarding.mockResolvedValue(READY);
+    api.gmailAuthorize.mockResolvedValue({ authorization_url: "https://accounts.google" });
+    api.gmailStatus
+      .mockResolvedValueOnce({ accounts: [] })
+      .mockResolvedValue({ accounts: [{ id: 1, email: "candidate@gmail.com" }] });
+    const popup = { closed: false };
+    const open = vi.spyOn(window, "open").mockReturnValue(popup);
+    renderSetup();
+
+    await user.click(await screen.findByRole("button", { name: /Connect Gmail/ }));
+    await waitFor(() => expect(open).toHaveBeenCalled());
+    popup.closed = true;
+
+    await waitFor(() => expect(api.gmailStatus).toHaveBeenCalledTimes(2), {
+      timeout: 3000,
+    });
+    expect(screen.queryByText(/This app is blocked/)).not.toBeInTheDocument();
+    open.mockRestore();
+  });
+
   it("says so when Gmail is not configured on the server", async () => {
     api.onboarding.mockResolvedValue({ ...READY, gmail_configured: false });
     renderSetup();

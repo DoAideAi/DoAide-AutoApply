@@ -8,6 +8,7 @@ import { after, before, test } from "node:test";
 // The server reads --root at import, so point it at a scratch dist first.
 const root = mkdtempSync(join(tmpdir(), "autoapply-dist-"));
 writeFileSync(join(root, "index.html"), "<title>shell</title>");
+writeFileSync(join(root, "sitemap.xml"), "<urlset/>");
 mkdirSync(join(root, "tools", "resume-score"), { recursive: true });
 writeFileSync(join(root, "tools", "resume-score", "index.html"), "<title>resume score</title>");
 process.argv.push("--root", root);
@@ -60,4 +61,10 @@ test("a missing asset is a real 404", async () => {
   const res = await fetch(`${base}/assets/missing.js`);
   assert.equal(res.status, 404);
   assert.equal(res.headers.get("x-content-type-options"), "nosniff");
+});
+
+test("the sitemap is served as XML", async () => {
+  const res = await fetch(`${base}/sitemap.xml`);
+  assert.equal(res.status, 200);
+  assert.match(res.headers.get("content-type"), /^application\/xml/);
 });

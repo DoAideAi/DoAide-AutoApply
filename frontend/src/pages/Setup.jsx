@@ -796,11 +796,26 @@ function LaunchStep({ state, status, onChange, onStarted, onError }) {
   );
 }
 
+const GMAIL_NOT_CONNECTED =
+  "Gmail wasn't connected. If Google said “This app is blocked”, that's " +
+  "Google's review of AutoApply's Gmail access, which is still in progress — " +
+  "until it finishes, only accounts we've approved can connect. Closed the " +
+  "window early? Try again.";
+
+// ``null`` when it can't be told, so a failed read never shows a false alarm.
+function countMailboxes() {
+  return api
+    .gmailStatus()
+    .then((s) => s.accounts?.length ?? 0)
+    .catch(() => null);
+}
+
 function ConnectEmail({ status, onChange, onError }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [busy, setBusy] = useState(false);
   const popupRef = useRef(null);
+  const accountsBefore = useRef(null);
 
   // The OAuth callback posts back from the popup; a poll covers the case where
   // the user completes consent but the message is lost (blocked opener, etc).
@@ -818,6 +833,11 @@ function ConnectEmail({ status, onChange, onError }) {
     return () => window.removeEventListener("message", onMessage);
   }, [onChange, onError, toast]);
 
+  // A popup closed without a postMessage either finished (and the message was
+  // lost) or never got back to us at all. The second is what Google's "This app
+  // is blocked" page looks like from here: it never redirects to the callback,
+  // so the user closes it and, before this, the page just went quiet. Counting
+  // mailboxes before and after tells the two apart.
   useEffect(() => {
     if (!busy) return undefined;
     const timer = setInterval(async () => {
@@ -825,16 +845,25 @@ function ConnectEmail({ status, onChange, onError }) {
         clearInterval(timer);
         setBusy(false);
         onChange().catch(() => {});
+        const before = accountsBefore.current;
+        const after = await countMailboxes();
+        if (before !== null && after !== null && after <= before) {
+          onError(GMAIL_NOT_CONNECTED);
+        }
       }
     }, 800);
     return () => clearInterval(timer);
-  }, [busy, onChange]);
+  }, [busy, onChange, onError]);
 
   async function connect() {
     onError(null);
     setBusy(true);
     try {
-      const { authorization_url } = await api.gmailAuthorize();
+      const [{ authorization_url }, before] = await Promise.all([
+        api.gmailAuthorize(),
+        countMailboxes(),
+      ]);
+      accountsBefore.current = before;
       popupRef.current = window.open(
         authorization_url,
         "doaide-gmail",
