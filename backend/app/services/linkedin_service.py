@@ -32,6 +32,7 @@ import logging
 import re
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from urllib.parse import urlparse
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session
@@ -59,8 +60,32 @@ GUEST_SEARCH_URL = (
     "https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
 )
 JOB_VIEW_URL = "https://www.linkedin.com/jobs/view/{job_id}/"
-LOGIN_URL = "https://www.linkedin.com/login"
+# ``_l`` is LinkedIn's own language switch. A signed-out page follows the
+# requester's IP rather than the browser's locale, and production is in
+# Helsinki: without it the sign-in page arrives in Finnish.
+LOGIN_URL = "https://www.linkedin.com/login?_l=en_US"
 FEED_URL = "https://www.linkedin.com/feed/"
+
+# The sign-in page is a React app: no <form>, generated ids, and a hidden copy
+# of each field rendered before the visible one. So controls are found the way
+# a person finds them — the *visible* email box, the visible password box, the
+# button named exactly "Sign in" (not "Sign in with Apple"; found by its
+# accessible name, which CSS text matching misses on these buttons) — with the
+# classic ids kept first for the variants LinkedIn still serves.
+_EMAIL_FIELDS = (
+    "#username:visible",
+    "input[name='session_key']:visible",
+    "input[autocomplete~='username']:visible",
+    "input[type='email']:visible",
+)
+_PASSWORD_FIELDS = (
+    "#password:visible",
+    "input[name='session_password']:visible",
+    "input[type='password']:visible",
+)
+_SIGN_IN_BUTTON_NAME = "Sign in"
+# Where LinkedIn sends a browser that is not signed in.
+_SIGNED_OUT_PATHS = ("/login", "/authwall", "/uas/login", "/signup")
 
 # Signs that LinkedIn wants the human, not the automation. Any of these ends the
 # run — see the module docstring.
@@ -400,8 +425,15 @@ class LinkedInCredentialsRejected(RuntimeError):
     """LinkedIn refused the stored password."""
 
 
-def _looks_signed_out(form: Form) -> bool:
-    return form.visible("#username") or form.visible("input[name='session_key']")
+def _first_visible(form: Form, selectors: tuple[str, ...]) -> str | None:
+    return next((sel for sel in selectors if form.visible(sel)), None)
+
+
+def _looks_signed_out(page, form: Form) -> bool:
+    path = urlparse(getattr(page, "url", "") or "").path.lower()
+    if any(path.startswith(p) for p in _SIGNED_OUT_PATHS):
+        return True
+    return _first_visible(form, _EMAIL_FIELDS) is not None
 
 
 def _challenge_reason(page, form: Form) -> str | None:
@@ -424,17 +456,28 @@ def ensure_login(page, account: LinkedInAccount, password: str) -> None:
     form = Form(page)
     goto(page, FEED_URL)
     dismiss_cookies(form)
-    if not _looks_signed_out(form):
+    if not _looks_signed_out(page, form):
         return  # the stored session is still good
 
     goto(page, LOGIN_URL)
     form = Form(page)
     dismiss_cookies(form)
+    form.settle(1500)
 
+    email_field = _first_visible(form, _EMAIL_FIELDS)
+    password_field = _first_visible(form, _PASSWORD_FIELDS)
+    if email_field is None or password_field is None:
+        raise TransientBrowserError("LinkedIn login form unusable: no email/password field")
     try:
-        page.fill("#username", account.email, timeout=10000)
-        page.fill("#password", password, timeout=10000)
-        page.click("button[type='submit']", timeout=10000)
+        page.locator(email_field).first.fill(account.email, timeout=10000)
+        page.locator(password_field).first.fill(password, timeout=10000)
+        button = page.get_by_role("button", name=_SIGN_IN_BUTTON_NAME, exact=True)
+        if button.count() != 1 and form.visible("button[type='submit']:visible"):
+            button = page.locator("button[type='submit']:visible")
+        if button.count() >= 1:
+            button.first.click(timeout=10000)
+        else:
+            page.locator(password_field).first.press("Enter", timeout=10000)
     except Exception as exc:  # noqa: BLE001 - a login page we can't drive
         raise TransientBrowserError(f"LinkedIn login form unusable: {exc}") from exc
 
@@ -450,7 +493,7 @@ def ensure_login(page, account: LinkedInAccount, password: str) -> None:
     text = form.text()
     if any(marker in text for marker in _BAD_CREDENTIAL_MARKERS):
         raise LinkedInCredentialsRejected("LinkedIn rejected the saved password.")
-    if _looks_signed_out(form):
+    if _looks_signed_out(page, form):
         raise TransientBrowserError("LinkedIn login did not complete")
 
 
