@@ -98,6 +98,9 @@ def _run_campaign(client, company: str = "Acme") -> dict:
 # --------------------------------------------------------------------------- #
 
 
+# Auto-send is a question for a user with a mailbox; without one every message
+# is a draft sent by hand (see test_manual_send.py).
+@pytest.mark.usefixtures("connected_gmail")
 class TestEvaluate:
     def _bare(self, db_session, user_id: int, **fields) -> AutopilotPreference:
         pref = AutopilotPreference(user_id=user_id, **fields)
@@ -199,6 +202,7 @@ class TestEvaluate:
         )
 
 
+@pytest.mark.usefixtures("connected_gmail")
 class TestCampaignIntent:
     """``intent`` — the campaign's own auto_send flag, folded into the decision.
 
@@ -263,6 +267,7 @@ class TestCampaignIntent:
         assert decision.code == send_policy.REASON_PAUSED
 
 
+@pytest.mark.usefixtures("connected_gmail")
 class TestPauseAndResume:
     def test_pause_extends_rather_than_shortens(self, db_session, current_user):
         """"Pause" must never be the verb that made something send sooner."""

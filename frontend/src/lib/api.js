@@ -364,6 +364,8 @@ export const api = {
   review: () => request("/review"),
   approveDraft: (id) => request(`/review/emails/${id}/approve`, { method: "POST" }),
   dismissDraft: (id) => request(`/review/emails/${id}/dismiss`, { method: "POST" }),
+  // Sent by the user from Gmail's compose window rather than by us.
+  markDraftSent: (id) => request(`/review/emails/${id}/mark-sent`, { method: "POST" }),
 
   // ---- interview prep ----
   interviewPrep: (applicationId) =>

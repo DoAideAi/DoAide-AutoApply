@@ -102,12 +102,10 @@ class TestNothingToPlan:
         assert plan.sends == []
         assert plan.summary == plan.blocked_reason
 
-    def test_no_mailbox_is_a_different_answer_from_autopilot_off(
-        self, db_session, current_user, pref
-    ):
+    def test_no_mailbox_still_plans(self, db_session, current_user, pref):
+        # Without a mailbox autopilot drafts, and the user sends from Gmail.
         plan = autopilot_plan.build_plan(db_session, current_user)
-        assert plan.active is False
-        assert "mailbox" in plan.blocked_reason
+        assert plan.active is True
 
     def test_the_endpoint_does_not_require_autopilot_to_be_on(self, auth_client):
         """Unlike POST /autopilot/run, which refuses. Asking is always allowed."""

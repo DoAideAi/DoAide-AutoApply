@@ -292,6 +292,9 @@ def _lock_account_for_send(
     ).scalar_one()
 
 
+MANUAL_SEND_NOTE = "No Gmail connected for auto-send — send this one yourself."
+
+
 # How many times an *unexpected* failure is worth trying again before the
 # message is written off. Small, and deliberately much smaller than
 # ``max_retries``: that budget is for the reputation gate, which holds a message
@@ -573,6 +576,13 @@ def _send_outreach_email(self, email_id: int) -> dict:
         # address has to go back out of *that* address: answering from another
         # one breaks the recruiter's threading and reads as a spoof.
         account = gmail_accounts.resolve_for_thread(db, thread, user=user)
+        if account is None:
+            # Nothing to send from — the user never connected Gmail, or
+            # disconnected it after this was queued (follow-ups are queued
+            # without asking the send policy). Parked, not failed: the user
+            # sends it themselves from the review queue.
+            _park_for_review(db, email, MANUAL_SEND_NOTE)
+            return {"email_id": email_id, "status": "held", "reason": "no mailbox"}
         account = _lock_account_for_send(db, account)
         # Reputation gate: warm-up ramp, rolling-24h cap, and bounce/complaint
         # cool-downs (see reputation_service). Leaves the email QUEUED and retries

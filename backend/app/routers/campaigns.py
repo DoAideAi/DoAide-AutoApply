@@ -154,11 +154,6 @@ def create_campaign(
     This is the only write the user makes to launch outreach: everything from
     finding contacts to spacing out the sends happens after this returns.
     """
-    if not user.gmail_connected:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Connect a Gmail account before starting outreach",
-        )
     resume = resolve_resume(db, user, payload.resume_id)
     if resume is None:
         raise HTTPException(
@@ -327,12 +322,6 @@ def resume_campaign(
             status_code=status.HTTP_409_CONFLICT,
             detail=f"Campaign is {campaign.status.value.lower()} and cannot be resumed",
         )
-    if not user.gmail_connected:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Connect a Gmail account before resuming outreach",
-        )
-
     if campaign.is_system:
         return _rearm(db, campaign)
 

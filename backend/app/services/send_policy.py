@@ -55,6 +55,10 @@ REASON_REVIEW_MODE = "review_mode"
 REASON_PAUSED = "paused"
 REASON_TRIAL = "trial"
 REASON_DAILY_LIMIT = "daily_limit"
+# No live mailbox: nothing can send on the user's behalf, so every message is a
+# draft they send themselves through Gmail's compose window. The default while
+# Google's verification of the Gmail scopes is pending.
+REASON_MANUAL = "manual_send"
 
 
 def _aware(value: datetime | None) -> datetime | None:
@@ -217,6 +221,16 @@ def evaluate(
     """
     now = now or datetime.now(UTC)
 
+    # Before intent: a campaign that asked to send cannot, with no mailbox to
+    # send from, and saying "review mode" would blame a setting nobody changed.
+    if not user.gmail_connected:
+        return AutoSendDecision(
+            False,
+            REASON_MANUAL,
+            "No Gmail connected for auto-send — send each email yourself "
+            "with Send via Gmail.",
+        )
+
     if intent is None:
         wants = bool(pref and pref.auto_send)
     else:
@@ -362,6 +376,7 @@ def status(
 __all__ = [
     "MAX_PAUSE_HOURS",
     "REASON_DAILY_LIMIT",
+    "REASON_MANUAL",
     "REASON_PAUSED",
     "REASON_REVIEW_MODE",
     "REASON_TRIAL",

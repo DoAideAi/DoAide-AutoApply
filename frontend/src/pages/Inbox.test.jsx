@@ -15,6 +15,8 @@ vi.mock("../lib/api", () => ({
     editEmail: vi.fn(),
     approveDraft: vi.fn(),
     dismissDraft: vi.fn(),
+    markDraftSent: vi.fn(),
+    gmailStatus: vi.fn(),
     review: vi.fn(),
     interviewPrep: vi.fn(),
     listProfiles: vi.fn(),
@@ -383,6 +385,8 @@ beforeEach(() => {
   api.editEmail.mockResolvedValue({});
   api.approveDraft.mockResolvedValue({});
   api.dismissDraft.mockResolvedValue({});
+  api.markDraftSent.mockResolvedValue({});
+  api.gmailStatus.mockResolvedValue({ connected: true });
   api.review.mockResolvedValue({ count: 0, items: [] });
   api.interviewPrep.mockResolvedValue(PREP);
   api.listProfiles.mockResolvedValue(PROFILES);
@@ -531,6 +535,23 @@ describe("Inbox", () => {
     expect(screen.getByRole("button", { name: "Approve & send" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Edit" })).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Discard" })).toBeInTheDocument();
+  });
+
+  it("sends a draft reply through Gmail when no mailbox is connected", async () => {
+    const user = userEvent.setup();
+    api.gmailStatus.mockResolvedValue({ connected: false });
+    renderInbox();
+
+    await user.click(await screen.findByRole("button", { name: /Acme/ }));
+
+    const link = await screen.findByRole("link", { name: "Send via Gmail" });
+    expect(link.getAttribute("href")).toContain("to=talent%40acme.com");
+    await waitFor(() =>
+      expect(screen.queryByRole("button", { name: "Approve & send" })).not.toBeInTheDocument(),
+    );
+
+    await user.click(screen.getByRole("button", { name: "Mark as sent" }));
+    await waitFor(() => expect(api.markDraftSent).toHaveBeenCalledWith(42));
   });
 
   it("names the resume the conversation draft will carry", async () => {
@@ -1185,6 +1206,53 @@ describe("Inbox drafts tab", () => {
     await waitFor(() =>
       expect(screen.getByRole("button", { name: "Approve & send" })).toBeEnabled(),
     );
+  });
+
+  it("puts Send via Gmail first, with the draft pre-filled", async () => {
+    api.review.mockResolvedValue({ count: 1, items: [REVIEW_ITEM] });
+    renderInbox("/inbox?tab=drafts");
+
+    const link = await screen.findByRole("link", { name: "Send via Gmail" });
+    const url = new URL(link.getAttribute("href"));
+    expect(url.origin + url.pathname).toBe("https://mail.google.com/mail/");
+    expect(url.searchParams.get("view")).toBe("cm");
+    expect(url.searchParams.get("to")).toBe(REVIEW_ITEM.to_address);
+    expect(url.searchParams.get("su")).toBe(REVIEW_ITEM.subject);
+    expect(url.searchParams.get("body")).toBe(REVIEW_ITEM.body_text);
+    expect(link).toHaveAttribute("target", "_blank");
+    // Sending from a connected mailbox is still there, as the second option.
+    expect(screen.getByRole("button", { name: "Approve & send" })).toHaveClass("btn-ghost");
+  });
+
+  it("marks a draft sent from Gmail, saving any edits first", async () => {
+    const user = userEvent.setup();
+    api.review.mockResolvedValue({ count: 1, items: [REVIEW_ITEM], manual_send: true });
+    renderInbox("/inbox?tab=drafts");
+
+    await user.click(await screen.findByRole("button", { name: "Edit" }));
+    const subject = screen.getByLabelText("Draft subject");
+    await user.clear(subject);
+    await user.type(subject, "Backend role");
+    expect(
+      new URL(screen.getByRole("link", { name: "Send via Gmail" }).href).searchParams.get("su"),
+    ).toBe("Backend role");
+
+    await user.click(screen.getByRole("button", { name: "Mark as sent" }));
+
+    await waitFor(() => expect(api.markDraftSent).toHaveBeenCalledWith(91));
+    expect(api.editEmail).toHaveBeenCalledWith(91, {
+      subject: "Backend role",
+      body_text: REVIEW_ITEM.body_text,
+    });
+    expect(api.approveDraft).not.toHaveBeenCalled();
+  });
+
+  it("hides Approve & send when there is no mailbox to send from", async () => {
+    api.review.mockResolvedValue({ count: 1, items: [REVIEW_ITEM], manual_send: true });
+    renderInbox("/inbox?tab=drafts");
+
+    await screen.findByRole("link", { name: "Send via Gmail" });
+    expect(screen.queryByRole("button", { name: "Approve & send" })).not.toBeInTheDocument();
   });
 });
 

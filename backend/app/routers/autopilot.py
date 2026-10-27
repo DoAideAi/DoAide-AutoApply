@@ -104,13 +104,9 @@ def update_autopilot(
     """Update any subset of the autopilot knobs (including the on/off switch)."""
     pref = _get_or_create(db, user)
 
-    # Turning autopilot on requires the same prerequisites as any outreach.
+    # No mailbox is not a reason to refuse: without one, autopilot drafts and
+    # the user sends each message from Gmail's compose window.
     turning_on = payload.is_active is True and not pref.is_active
-    if turning_on and not user.gmail_connected:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Connect a Gmail account before turning on autopilot",
-        )
 
     edited = payload.model_dump(exclude_unset=True)
     # An omitted key means "leave it alone"; an explicit null is a value, and on

@@ -225,14 +225,44 @@ def send_headroom(
     do not arrive in the same words.
     """
     now = now or datetime.now(UTC)
+    accounts = gmail_accounts.live_accounts(user)
+    if not accounts:
+        # Manual sending: no ramp to respect, since each message leaves through
+        # the user's own Gmail compose window. The limit is their attention —
+        # drafts they have not sent yet. Without it, a user who stops clicking
+        # Send would keep paying for a day's scoring and tailoring that nobody
+        # reads.
+        waiting = unsent_drafts(db, user.id)
+        return max(0, MANUAL_DRAFT_BACKLOG - waiting), MANUAL_DRAFT_BACKLOG
     total = limit = 0
-    for account in gmail_accounts.live_accounts(user):
+    for account in accounts:
         day_limit = reputation_service.warmup_day_limit(account, now=now)
         limit += day_limit
         sent = _sent_in_last_24h(db, user.id, account)
         if reputation_service.evaluate(account, sent, now=now).allowed:
             total += max(0, day_limit - sent)
     return total, limit
+
+
+# Most outreach drafts a user without a connected mailbox may have waiting.
+MANUAL_DRAFT_BACKLOG = 10
+
+
+def unsent_drafts(db: Session, user_id: int) -> int:
+    """Outreach drafts waiting on *user_id* — the manual-send backlog."""
+    return (
+        db.scalar(
+            select(func.count(Email.id))
+            .join(EmailThread, Email.thread_id == EmailThread.id)
+            .join(Application, EmailThread.application_id == Application.id)
+            .where(
+                Application.user_id == user_id,
+                Email.direction == EmailDirection.SENT,
+                Email.status == EmailStatus.DRAFT,
+            )
+        )
+        or 0
+    )
 
 
 def pause_reason(user: User, *, now: datetime | None = None) -> str | None:
@@ -1071,9 +1101,6 @@ def _run_user_autopilot(db: Session, user: User) -> AutoApplyResult:
     pref = user.autopilot
     if pref is None or not pref.is_active:
         return AutoApplyResult(status="inactive")
-    if not user.gmail_connected:
-        return AutoApplyResult(status="no_gmail", notes=["Connect a Gmail account"])
-
     # A user who has never opened the profile UI still runs on one: their
     # preferences and default resume, written down as the profile the pipeline
     # was already implicitly using.
@@ -1122,7 +1149,10 @@ def _run_user_autopilot(db: Session, user: User) -> AutoApplyResult:
             held
             if held is not None
             else (
-                f"daily budget used (cap {pref.daily_application_limit}, "
+                f"{MANUAL_DRAFT_BACKLOG} drafts are waiting for you to send — "
+                "send or discard some and the next run writes more"
+                if not user.gmail_connected and headroom <= 0
+                else f"daily budget used (cap {pref.daily_application_limit}, "
                 f"warm-up {day_limit}/day)"
             )
         )
@@ -1295,4 +1325,5 @@ __all__ = [
     "relevance_gate",
     "run_user_autopilot",
     "send_headroom",
+    "unsent_drafts",
 ]

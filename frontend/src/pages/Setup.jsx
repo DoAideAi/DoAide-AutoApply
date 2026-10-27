@@ -768,28 +768,25 @@ function PrefillBanner({ fields }) {
 }
 
 /* -------------------------------------------------------------------------- */
-/* Step 3 — connect Gmail and start                                            */
+/* Step 3 — start, with Gmail as an option                                     */
 /* -------------------------------------------------------------------------- */
 
 /**
- * The mailbox and the switch, in one row. They were two steps; asking someone to
- * press "next" between granting Gmail access and turning the thing on was a step
- * that existed only to be counted.
+ * The switch, and the mailbox beside it. A connected mailbox is no longer a
+ * prerequisite: without one every message waits in the Inbox with a "Send via
+ * Gmail" button, which is how most users send while Google's review of the
+ * Gmail scopes is pending. Connecting stays on offer for those who can.
  */
 function LaunchStep({ state, status, onChange, onStarted, onError }) {
   return (
-    <Step index={3} title="Connect your email and start" state={state}>
+    <Step index={3} title="Start autopilot" state={state}>
       {state === "todo" ? null : (
         <div className="space-y-5">
-          <ConnectEmail status={status} onChange={onChange} onError={onError} />
+          <StartAutopilot status={status} onStarted={onStarted} onError={onError} />
+          <div className="border-t pt-4 hairline">
+            <ConnectEmail status={status} onChange={onChange} onError={onError} />
+          </div>
           {status.gmail_connected && <RecruiterInboxToggle />}
-          {status.gmail_connected && (
-            <StartAutopilot
-              status={status}
-              onStarted={onStarted}
-              onError={onError}
-            />
-          )}
         </div>
       )}
     </Step>
@@ -919,11 +916,12 @@ function ConnectEmail({ status, onChange, onError }) {
   return (
     <div className="space-y-4">
       <p className="max-w-lg text-sm leading-relaxed text-white/50">
-        Outreach is sent from your own Gmail, so it lands in the inbox rather
-        than a spam folder — and replies come straight back to you.
+        Optional: connect Gmail to have approved messages sent for you. Without
+        it, each one opens in your Gmail ready to send — replies come straight
+        back to you either way.
       </p>
       {status.gmail_configured ? (
-        <button className="btn-primary" onClick={connect} disabled={busy}>
+        <button className="btn-ghost" onClick={connect} disabled={busy}>
           <GoogleGlyph />
           {busy ? "Waiting for Google…" : "Connect Gmail"}
         </button>
@@ -1166,9 +1164,11 @@ function StartAutopilot({ status, onStarted, onError }) {
 
   if (status.autopilot_active)
     return (
-      <div className="space-y-3 border-t pt-4 hairline">
+      <div className="space-y-3">
         <p className="text-sm text-white/55">
-          Autopilot is running from {status.gmail_address}.
+          {status.gmail_address
+            ? `Autopilot is running from ${status.gmail_address}.`
+            : "Autopilot is running. Drafts wait in your Inbox — send each from Gmail."}
         </p>
         <button className="btn-ghost" onClick={() => onStarted()}>
           Open pipeline
@@ -1177,13 +1177,22 @@ function StartAutopilot({ status, onStarted, onError }) {
     );
 
   return (
-    <div className="space-y-4 border-t pt-4 hairline">
-      <p className="text-sm leading-relaxed text-white/45">
-        From here on it runs itself: we watch for matching jobs, score each one
-        against your resumes, tailor for the good ones, find the right recruiter,
-        and send from {status.gmail_address}. Sending starts gently — a few a day
-        for the first week — to keep your mailbox in good standing.
-      </p>
+    <div className="space-y-4">
+      {status.gmail_connected ? (
+        <p className="text-sm leading-relaxed text-white/45">
+          From here on it runs itself: we watch for matching jobs, score each one
+          against your resumes, tailor for the good ones, find the right recruiter,
+          and send from {status.gmail_address}. Sending starts gently — a few a day
+          for the first week — to keep your mailbox in good standing.
+        </p>
+      ) : (
+        <p className="text-sm leading-relaxed text-white/45">
+          From here on we watch for matching jobs, score each one against your
+          resumes, tailor for the good ones, find the right recruiter, and write
+          the email. Each one waits in your Inbox: press Send via Gmail and it
+          opens in your Gmail, ready to go.
+        </p>
+      )}
       <div className="flex items-center gap-3">
         <button className="btn-primary" onClick={start} disabled={busy}>
           {busy ? "Starting…" : "Start autopilot"}

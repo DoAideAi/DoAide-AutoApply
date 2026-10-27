@@ -14,6 +14,7 @@ Two kinds of message land here as ``DRAFT`` and wait for the user:
     GET  /review/count               -> just the number, for a badge
     POST /review/emails/{id}/approve -> queue + dispatch the send
     POST /review/emails/{id}/dismiss -> discard the draft
+    POST /review/emails/{id}/mark-sent -> the user sent it themselves from Gmail
     POST /review/approve-batch       -> approve many at once
 
 Editing a draft before approving is the existing ``PATCH /tracker/emails/{id}``.
@@ -34,12 +35,14 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from sqlalchemy import Select, func, select
 from sqlalchemy.orm import Session, selectinload
 
+from app.core import events
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.deps import get_current_user
 from app.core.pagination import Page, page_params
 from app.core.rate_limit import rate_limit
 from app.models.application import Application
+from app.models.campaign import Campaign
 from app.models.email import Email, EmailDirection, EmailStatus, ReplyIntent
 from app.models.email_thread import EmailThread
 from app.models.reply_feedback import FeedbackSignal
@@ -294,6 +297,7 @@ def review_queue(
         has_more=has_more,
         items=items,
         auto_send=send_policy.status(db, user, user.autopilot),
+        manual_send=not user.gmail_connected,
     )
 
 
@@ -374,6 +378,61 @@ def approve(
     db.refresh(email)
 
     _dispatch(db, email.id)
+    return email
+
+
+@router.post(
+    "/emails/{email_id}/mark-sent",
+    response_model=EmailOut,
+    dependencies=[Depends(_write_limit)],
+)
+def mark_sent(
+    email_id: int,
+    db: Session = Depends(get_db),
+    user: User = Depends(get_current_user),
+) -> Email:
+    """Record a draft the user sent themselves, from Gmail's compose window.
+
+    The manual counterpart of :func:`approve`: the message already left, through
+    a window we opened but cannot see, so this books it the way the sender books
+    a delivery — status, the pipeline stage, the follow-up clock — on the user's
+    word. There is no Gmail message id to store, and no thread to pin to a
+    mailbox; replies on it are the user's to read in their own inbox.
+    """
+    from app.tasks.email_tasks import _after_send
+
+    email = _owned_draft(db, user, email_id)
+    is_reply = _is_reply(db, email)
+    thread = db.get(EmailThread, email.thread_id)
+    application = db.get(Application, thread.application_id)
+    campaign = (
+        db.get(Campaign, application.campaign_id) if application.campaign_id else None
+    )
+
+    now = datetime.now(UTC)
+    email.status = EmailStatus.SENT
+    email.auto_sent = False
+    email.needs_attention = False
+    email.attention_reason = None
+    email.sent_at = now
+    thread.last_message_at = now
+    _record_verdict(db, email_id, FeedbackSignal.APPROVED, "review_mark_sent")
+    if not is_reply:
+        send_policy.record_approval(user.autopilot)
+    recruiter_reply_service.record_send_success(db, email)
+    db.commit()
+    events.emit(
+        events.EMAIL_SENT,
+        email_id=email.id,
+        user_id=user.id,
+        campaign_id=campaign.id if campaign else None,
+        application_id=application.id,
+        recipient_domain=events.recipient_domain(email.to_address),
+        manual=True,
+    )
+
+    _after_send(db, email, application, campaign)
+    db.refresh(email)
     return email
 
 

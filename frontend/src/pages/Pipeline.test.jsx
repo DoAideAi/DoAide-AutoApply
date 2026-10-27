@@ -194,7 +194,7 @@ describe("Pipeline autopilot bar", () => {
     expect(await screen.findByRole("button", { name: "Run now" })).toBeDisabled();
   });
 
-  it("will not run before Gmail is connected", async () => {
+  it("runs without Gmail connected — drafts are sent from Gmail compose", async () => {
     api.getAutopilot.mockResolvedValue({ ...AUTOPILOT, is_active: true });
     api.onboarding.mockResolvedValue({
       complete: true,
@@ -203,7 +203,7 @@ describe("Pipeline autopilot bar", () => {
     });
     renderPipeline();
 
-    expect(await screen.findByRole("button", { name: "Run now" })).toBeDisabled();
+    expect(await screen.findByRole("button", { name: "Run now" })).toBeEnabled();
   });
 
   it("keeps the rest of the page alive when autopilot cannot be read", async () => {

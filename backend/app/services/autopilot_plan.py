@@ -595,9 +595,6 @@ def build_plan(db: Session, user: User, *, limit: int | None = None) -> DryRunPl
     if pref is None or not pref.is_active:
         plan.blocked_reason = "Autopilot is off — nothing is scheduled."
         return plan
-    if not user.gmail_connected:
-        plan.blocked_reason = "No mailbox connected — autopilot cannot send."
-        return plan
 
     plan.active = True
     plan.daily_application_limit = pref.daily_application_limit

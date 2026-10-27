@@ -317,7 +317,11 @@ class TestPrepareFollowUpEmail:
         db_session.commit()
         return follow_up
 
-    def test_queues_an_email_on_the_existing_thread(self, db_session, outreach):
+    def test_queues_an_email_on_the_existing_thread(
+        self, db_session, outreach, connected_gmail
+    ):
+        # Queued needs a mailbox to send from; without one it waits as a draft
+        # for Send via Gmail (test_manual_send.py).
         follow_up = self._due(db_session, outreach)
         email, skip = svc.prepare_follow_up_email(db_session, follow_up)
         db_session.commit()

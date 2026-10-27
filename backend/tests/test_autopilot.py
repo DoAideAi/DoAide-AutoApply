@@ -79,10 +79,12 @@ class TestOnboarding:
         assert body["next_step"] == "set_preferences"
         assert body["autopilot_configured"] is False
 
-    def test_asks_for_gmail_once_the_search_is_confirmed(self, auth_client, resume):
+    def test_gmail_is_not_a_step_of_its_own(self, auth_client, resume):
+        # Without a mailbox the user sends each draft from Gmail's compose
+        # window, so connecting one is optional and never blocks starting.
         auth_client.put("/api/v1/autopilot", json={"min_fit_score": 75})
         body = auth_client.get("/api/v1/onboarding").json()
-        assert body["next_step"] == "connect_email"
+        assert body["next_step"] == "start_autopilot"
         assert body["gmail_connected"] is False
 
     def test_advances_to_start_once_preferences_are_saved(self, ready):
@@ -101,10 +103,9 @@ class TestOnboarding:
 
 
 class TestGuardRails:
-    def test_campaign_requires_a_connected_gmail(self, auth_client, resume):
+    def test_campaign_does_not_require_a_connected_gmail(self, auth_client, resume):
         resp = auth_client.post("/api/v1/campaigns", json={"target_companies": ["Acme"]})
-        assert resp.status_code == 409
-        assert "Gmail" in resp.json()["detail"]
+        assert resp.status_code != 409, resp.text
 
     def test_campaign_requires_a_resume(self, auth_client, connected_gmail):
         resp = auth_client.post("/api/v1/campaigns", json={"target_companies": ["Acme"]})

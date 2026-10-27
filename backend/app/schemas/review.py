@@ -68,6 +68,9 @@ class ReviewQueue(BaseModel):
     # "you paused auto-send" and "you're on email 2 of 3 of your trial" are very
     # different situations and the pile of drafts looks identical in both.
     auto_send: dict | None = None
+    # No live mailbox: each draft goes out through the user's own Gmail compose
+    # window rather than "Approve & send".
+    manual_send: bool = False
 
 
 # The most drafts one call may approve. Every approval schedules a send with a

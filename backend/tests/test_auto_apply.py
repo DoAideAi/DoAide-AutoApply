@@ -63,10 +63,10 @@ class TestPreferences:
         assert body["min_fit_score"] == 70
         assert body["applications_created"] == 0
 
-    def test_cannot_activate_without_gmail(self, auth_client, resume):
+    def test_activates_without_gmail(self, auth_client, resume):
+        # No mailbox means drafts sent by hand from Gmail, not a refusal.
         resp = _activate(auth_client)
-        assert resp.status_code == 409
-        assert "Gmail" in resp.json()["detail"]
+        assert resp.status_code == 200, resp.text
 
     def test_update_persists_targeting(self, auth_client, connected_gmail):
         resp = auth_client.put(

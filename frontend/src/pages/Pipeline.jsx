@@ -287,7 +287,6 @@ function AutopilotBar({ onError, toast }) {
 /** Why "Run now" is disabled, or null when it's runnable. */
 function runDisabledReason({ onboarding, pref, running }) {
   if (running) return null; // button already reads "Running…"
-  if (onboarding && !onboarding.gmail_connected) return "Connect Gmail first";
   if (onboarding && onboarding.resume_count === 0) return "Upload a resume first";
   if (!pref.is_active) return "Turn autopilot on to run it";
   return null;

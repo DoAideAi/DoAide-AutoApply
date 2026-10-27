@@ -117,8 +117,6 @@ def onboarding(
         next_step = "upload_resume"
     elif not autopilot_configured:
         next_step = "set_preferences"
-    elif not user.gmail_connected:
-        next_step = "connect_email"
     elif not autopilot_active:
         next_step = "start_autopilot"
     else:

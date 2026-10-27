@@ -233,7 +233,7 @@ describe("Setup — the page renders at all", () => {
     expect(headings.slice(0, 3).map((h) => h.textContent)).toEqual([
       "Add your resumes",
       "Confirm your search",
-      "Connect your email and start",
+      "Start autopilot",
     ]);
     // The optional LinkedIn panel sits below the numbered flow, never inside it.
     expect(

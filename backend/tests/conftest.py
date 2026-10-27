@@ -11,6 +11,7 @@ import tempfile
 
 # Ensure a clean, keyless config *before* app modules import settings.
 os.environ.setdefault("OPENROUTER_API_KEY", "")
+os.environ.update({"GEMINI_API_KEY": "", "GROQ_API_KEY": "", "CEREBRAS_API_KEY": ""})
 os.environ.setdefault("JWT_SECRET", "test-secret-key-for-tests-only")
 os.environ.setdefault("DATABASE_URL", "sqlite+pysqlite:///:memory:")
 # Run campaign work inline instead of dispatching to a worker — no broker exists
@@ -46,6 +47,15 @@ from app.models.gmail_account import GmailAccount
 from app.models.resume import Resume
 from app.models.user import User
 from app.services import crypto
+
+
+@pytest.fixture(autouse=True)
+def isolated_rate_limits():
+    from app.core import rate_limit
+
+    rate_limit.reset()
+    yield
+    rate_limit.reset()
 
 # A realistic resume body, shared by the parser and upload tests.
 SAMPLE_RESUME_TEXT = """\

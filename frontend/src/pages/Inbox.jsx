@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import RecruiterStats from "../components/RecruiterStats";
+import SendViaGmail from "../components/SendViaGmail";
 import { useConfirm } from "../components/ui/ConfirmDialog";
 import ErrorBanner from "../components/ui/ErrorBanner";
 import FilePreview from "../components/ui/FilePreview";
@@ -941,13 +942,36 @@ function DraftAttachments({ emailId, initialFiles = [], note, onError }) {
 }
 
 /**
+ * Whether a mailbox is connected that could send on the user's behalf: null
+ * until known, and left null when the check fails. Unknown keeps "Send
+ * automatically" on offer — hiding it from a connected user over a blip is
+ * worse than showing it to one who will see the server park the draft.
+ */
+function useMailboxConnected() {
+  const [connected, setConnected] = useState(null);
+  useEffect(() => {
+    let live = true;
+    Promise.resolve()
+      .then(() => api.gmailStatus())
+      .then((status) => live && setConnected(Boolean(status?.connected)))
+      .catch(() => {});
+    return () => {
+      live = false;
+    };
+  }, []);
+  return connected;
+}
+
+/**
  * The draft the reply agent wrote, inline at the foot of the conversation.
- * Same contract as the Drafts tab: read it, edit it if you like, then approve
- * or discard. Nothing goes out unapproved.
+ * Same contract as the Drafts tab: read it, edit it if you like, then send it
+ * from Gmail (or, with a connected mailbox, have it sent) or discard. Nothing
+ * goes out unapproved.
  */
 function DraftReply({ draft, to, replyNonce, onChange, onError }) {
   const toast = useToast();
   const confirm = useConfirm();
+  const mailbox = useMailboxConnected();
   const [subject, setSubject] = useState(draft.subject || "");
   const [body, setBody] = useState(draft.body_text || "");
   const [editing, setEditing] = useState(false);
@@ -993,6 +1017,10 @@ function DraftReply({ draft, to, replyNonce, onChange, onError }) {
     )
       return;
     await run(api.approveDraft, "Reply sent.");
+  }
+
+  async function markSent() {
+    await run(api.markDraftSent, "Marked as sent.");
   }
 
   async function discard() {
@@ -1083,9 +1111,19 @@ function DraftReply({ draft, to, replyNonce, onChange, onError }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t px-5 py-3 hairline">
-        <button className="btn-primary" onClick={approve} disabled={busy}>
-          {busy ? "Working…" : "Approve & send"}
-        </button>
+        <SendViaGmail
+          to={to}
+          subject={subject}
+          body={body}
+          attachments={draft.attachments}
+          busy={busy}
+          onMarkSent={markSent}
+        />
+        {mailbox !== false && (
+          <button className="btn-ghost" onClick={approve} disabled={busy}>
+            {busy ? "Working…" : "Approve & send"}
+          </button>
+        )}
         {editing ? (
           <button className="btn-ghost" onClick={save} disabled={busy || !dirty}>
             Save edits
@@ -1914,7 +1952,7 @@ function DraftsView({ onTab }) {
         <p className="mt-3 max-w-lg text-sm leading-relaxed text-white/45">
           {queue.count === 0
             ? "When a recruiter replies, or you run in review mode, drafts land here for your approval."
-            : "Read each draft, tweak it if you like, then send or discard. Approved messages go out from your own inbox."}
+            : "Read each draft, tweak it if you like, then send it from Gmail — it opens with the message written — and mark it as sent. Or discard it."}
         </p>
       </header>
 
@@ -1935,6 +1973,7 @@ function DraftsView({ onTab }) {
           <DraftCard
             key={item.email_id}
             item={item}
+            manualSend={queue.manual_send}
             onChange={refresh}
             onError={setError}
           />
@@ -1944,7 +1983,7 @@ function DraftsView({ onTab }) {
   );
 }
 
-function DraftCard({ item, onChange, onError }) {
+function DraftCard({ item, manualSend, onChange, onError }) {
   const toast = useToast();
   const confirm = useConfirm();
   const [subject, setSubject] = useState(item.subject || "");
@@ -1979,6 +2018,10 @@ function DraftCard({ item, onChange, onError }) {
     )
       return;
     await run(api.approveDraft, "Sent.");
+  }
+
+  async function markSent() {
+    await run(api.markDraftSent, "Marked as sent.");
   }
 
   async function discard() {
@@ -2083,9 +2126,22 @@ function DraftCard({ item, onChange, onError }) {
       </div>
 
       <div className="flex flex-wrap items-center gap-2 border-t px-5 py-3 hairline">
-        <button className="btn-primary" onClick={approve} disabled={busy}>
-          {busy ? "Working…" : "Approve & send"}
-        </button>
+        <SendViaGmail
+          to={item.to_address}
+          subject={subject}
+          body={body}
+          attachments={item.attachments}
+          busy={busy}
+          onMarkSent={markSent}
+        />
+        {/* Sending from the user's connected mailbox stays on offer as the
+            second way out; with none connected the server would only park
+            the draft again. */}
+        {!manualSend && (
+          <button className="btn-ghost" onClick={approve} disabled={busy}>
+            {busy ? "Working…" : "Approve & send"}
+          </button>
+        )}
         {editing ? (
           <button className="btn-ghost" onClick={save} disabled={busy || !dirty}>
             Save edits
