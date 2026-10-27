@@ -2,7 +2,7 @@
 // navigation (applyMeta) and to the built index.html string at build time
 // (renderHead). Both write the same set, so what a crawler reads in the HTML and
 // what the rendered page says agree.
-import { canonicalUrl, fullTitle } from "./routes.js";
+import { PUBLISHER, SITE_NAME, canonicalUrl, fullTitle } from "./routes.js";
 
 function escapeAttr(value) {
   return String(value)
@@ -45,6 +45,9 @@ export function applyMeta(meta, doc = document) {
     }
     el.setAttribute("content", attrs.content);
   }
+  // The prerendered page's JSON-LD describes the URL it was built for, not the
+  // one navigated to.
+  doc.head.querySelectorAll("script[data-page-ld]").forEach((el) => el.remove());
   let link = doc.head.querySelector('link[rel="canonical"]');
   if (canonical) {
     if (!link) {
@@ -92,6 +95,49 @@ export function renderHead(html, meta) {
 
   if (missing.length) out = out.replace("</head>", `    ${missing.join("\n    ")}\n  </head>`);
   return out;
+}
+
+/** Schema.org data for one page: an Article for blog posts, a WebPage otherwise. */
+export function pageJsonLd({ path, title, description, ogType, lastmod }) {
+  const url = canonicalUrl(path);
+  if (ogType === "article") {
+    return {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      headline: title,
+      description,
+      url,
+      mainEntityOfPage: url,
+      ...(lastmod ? { datePublished: lastmod, dateModified: lastmod } : {}),
+      author: PUBLISHER,
+      publisher: PUBLISHER,
+    };
+  }
+  return {
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: fullTitle(title),
+    description,
+    url,
+    isPartOf: { "@type": "WebSite", name: SITE_NAME, url: canonicalUrl("/") },
+    publisher: PUBLISHER,
+  };
+}
+
+/**
+ * Add the page's JSON-LD to <head> and its heading and description to the empty
+ * #root, so the HTML carries an h1 before the JavaScript runs. createRoot
+ * replaces the contents of #root on mount.
+ */
+export function renderBody(html, meta) {
+  const ld = JSON.stringify(pageJsonLd(meta)).replace(/</g, "\\u003c");
+  const heading = meta.heading ?? meta.title;
+  return html
+    .replace("</head>", `  <script type="application/ld+json" data-page-ld>${ld}</script>\n  </head>`)
+    .replace(
+      '<div id="root"></div>',
+      `<div id="root"><main><h1>${escapeAttr(heading)}</h1><p>${escapeAttr(meta.description)}</p></main></div>`,
+    );
 }
 
 export function buildSitemap(routes, siteUrl) {

@@ -99,7 +99,7 @@ export default function Shell({ children }) {
         <div className="mb-2 flex flex-wrap justify-center gap-x-3 gap-y-1 font-mono text-[10px] uppercase tracking-[0.14em]">
           <a href="https://desk.doaide.com" target="_blank" rel="noopener noreferrer" className="text-ink-400/60 no-underline hover:text-brand-500">Desk</a>
           <a href="https://pulse.doaide.com" target="_blank" rel="noopener noreferrer" className="text-ink-400/60 no-underline hover:text-brand-500">Pulse</a>
-          <a href="https://409a.doaide.com" target="_blank" rel="noopener noreferrer" className="text-ink-400/60 no-underline hover:text-brand-500">409A</a>
+          <a href="https://409.doaide.com" target="_blank" rel="noopener noreferrer" className="text-ink-400/60 no-underline hover:text-brand-500">409A</a>
           <span className="text-brand-500">AutoApply</span>
           <a href="https://realty.doaide.com" target="_blank" rel="noopener noreferrer" className="text-ink-400/60 no-underline hover:text-brand-500">Realty</a>
           <a href="https://med.doaide.com" target="_blank" rel="noopener noreferrer" className="text-ink-400/60 no-underline hover:text-brand-500">Med</a>

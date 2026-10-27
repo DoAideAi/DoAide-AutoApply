@@ -2,7 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 import { ARTICLES } from "../pages/blog/articles.js";
-import { applyMeta, buildSitemap, renderHead } from "./head.js";
+import { applyMeta, buildSitemap, pageJsonLd, renderBody, renderHead } from "./head.js";
 import { HOME_META, PUBLIC_ROUTES, SITE_URL, canonicalUrl, fullTitle, metaFor } from "./routes.js";
 
 const TEMPLATE = readFileSync(resolve(__dirname, "../../index.html"), "utf8");
@@ -95,5 +95,23 @@ describe("applyMeta", () => {
     applyMeta({ path: null, title: "Page not found", description: "x", noindex: true });
     expect(document.head.querySelector('link[rel="canonical"]')).toBeNull();
     expect(document.head.querySelector('meta[name="robots"]').content).toBe("noindex");
+  });
+});
+
+describe("renderBody", () => {
+  const shell = "<html><head><title>x</title></head><body><div id=\"root\"></div></body></html>";
+
+  it("puts the page heading in #root and page JSON-LD in the head", () => {
+    const html = renderBody(shell, metaFor("/tools/resume-score"));
+    expect(html).toContain("<h1>Free ATS Resume Score Checker</h1>");
+    expect(html).toMatch(/<script type="application\/ld\+json" data-page-ld>.*"@type":"WebPage".*<\/script>\n  <\/head>/);
+  });
+
+  it("uses the homepage's own heading and Article data for posts", () => {
+    expect(renderBody(shell, HOME_META)).toContain("<h1>AI-powered job application platform</h1>");
+    const post = PUBLIC_ROUTES.find((r) => r.ogType === "article");
+    const ld = pageJsonLd(post);
+    expect(ld["@type"]).toBe("Article");
+    expect(ld.datePublished).toBe(post.lastmod);
   });
 });

@@ -1,7 +1,7 @@
 const TOOLS = [
   { icon: "\u{1F4C4}", name: "Docs", url: "https://docs.doaide.com", desc: "Free document generators" },
   { icon: "\u{1F4DD}", name: "Resume", url: "https://resume.doaide.com", desc: "AI resume builder" },
-  { icon: "\u{1F4CA}", name: "409A", url: "https://409a.doaide.com", desc: "Startup valuations" },
+  { icon: "\u{1F4CA}", name: "409A", url: "https://409.doaide.com", desc: "Startup valuations" },
   { icon: "\u{1F3F7}️", name: "GST Bot", url: "https://gst.doaide.com", desc: "GST filing & compliance" },
   { icon: "\u{1F6E1}️", name: "InsureKit", url: "https://insure.doaide.com", desc: "Insurance calculators" },
   { icon: "\u{1F4B0}", name: "TaxFile", url: "https://tax.doaide.com", desc: "Tax & financial calculators" },

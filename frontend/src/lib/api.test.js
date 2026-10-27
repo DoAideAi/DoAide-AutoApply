@@ -1,4 +1,4 @@
-import { describe, expect, it, beforeEach, vi } from "vitest";
+import { describe, expect, it, beforeEach, afterEach, vi } from "vitest";
 
 const TOKEN_KEY = "autoapply_token";
 const LEGACY_TOKEN_KEY = "talentping_token";
@@ -45,5 +45,24 @@ describe("token migration", () => {
     setToken(null);
     expect(mockStorage.getItem(TOKEN_KEY)).toBeNull();
     expect(mockStorage.getItem(LEGACY_TOKEN_KEY)).toBeNull();
+  });
+});
+
+describe("email AI consent requests", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("sends a JSON object rather than a JSON-encoded string", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true, status: 200,
+      text: async () => JSON.stringify({ enabled: true, version: "2026-10-13" }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+    const { api } = await import("./api.js");
+    await api.setGmailAIConsent(true, "2026-10-13");
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toBe("/api/v1/gmail/ai-consent");
+    expect(options.method).toBe("PUT");
+    expect(options.headers["Content-Type"]).toBe("application/json");
+    expect(JSON.parse(options.body)).toEqual({ enabled: true, version: "2026-10-13" });
   });
 });

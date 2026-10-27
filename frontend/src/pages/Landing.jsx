@@ -18,7 +18,7 @@ const ACCENT = "#0D9488";
 const DOAIDE_PRODUCTS = [
   { name: "Desk", url: "https://desk.doaide.com" },
   { name: "Pulse", url: "https://pulse.doaide.com" },
-  { name: "409A", url: "https://409a.doaide.com" },
+  { name: "409A", url: "https://409.doaide.com" },
   { name: "GST", url: "https://gst.doaide.com" },
   { name: "Med", url: "https://med.doaide.com" },
   { name: "Realty", url: "https://realty.doaide.com" },

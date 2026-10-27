@@ -5,6 +5,7 @@ import PreferencesForm, {
   SparkleGlyph,
 } from "../components/PreferencesForm";
 import ProfileManager from "../components/ProfileManager";
+import GmailAIConsent from "../components/GmailAIConsent";
 import Step from "../components/Step";
 import { useConfirm } from "../components/ui/ConfirmDialog";
 import ErrorBanner from "../components/ui/ErrorBanner";
@@ -900,6 +901,7 @@ function ConnectEmail({ status, onChange, onError }) {
     return (
       <div className="space-y-4">
         <DisconnectRow address={status.gmail_address} onDisconnect={disconnect} />
+        <GmailAIConsent />
         <div>
           <button className="btn-ghost" onClick={connect} disabled={busy}>
             <GoogleGlyph />
@@ -920,6 +922,7 @@ function ConnectEmail({ status, onChange, onError }) {
         it, each one opens in your Gmail ready to send — replies come straight
         back to you either way.
       </p>
+      <GmailAIConsent />
       {status.gmail_configured ? (
         <button className="btn-ghost" onClick={connect} disabled={busy}>
           <GoogleGlyph />

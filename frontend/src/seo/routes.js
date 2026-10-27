@@ -9,10 +9,12 @@ import { ARTICLES } from "../pages/blog/articles.js";
 
 export const SITE_URL = "https://job.doaide.com";
 export const SITE_NAME = "DoAide AutoApply";
+export const PUBLISHER = { "@type": "Organization", name: "DoAide", url: "https://doaide.com" };
 
 export const HOME_META = {
   path: "/",
   title: "DoAide AutoApply — AI Job Application Platform",
+  heading: "AI-powered job application platform",
   description:
     "Upload your resume, DoAide AutoApply finds recruiters and writes the emails. AI-powered job application automation that gets results.",
   changefreq: "weekly",
@@ -80,6 +82,13 @@ export const PUBLIC_ROUTES = [
     priority: "0.7",
     ogType: "article",
   })),
+];
+
+// Served by the API as static HTML (backend/app/static), not the SPA: listed in
+// sitemap.xml but given no prerendered index.html.
+export const SERVER_PAGES = [
+  { path: "/privacy", changefreq: "yearly", priority: "0.3" },
+  { path: "/terms", changefreq: "yearly", priority: "0.3" },
 ];
 
 export function metaFor(path) {

@@ -4,6 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Privacy Policy — DoAide AutoApply</title>
+<meta name="description" content="How DoAide AutoApply collects, uses and protects your data, including Gmail access and resume information.">
+<link rel="canonical" href="https://job.doaide.com/privacy">
 <style>
   :root { color-scheme: light; }
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -29,7 +31,7 @@
 <div class="container">
 
 <h1>Privacy Policy</h1>
-<p class="subtitle">DoAide AutoApply (formerly TalentPing) &mdash; Last updated: October 2, 2026</p>
+<p class="subtitle">DoAide AutoApply (formerly TalentPing) &mdash; Last updated: October 14, 2026</p>
 
 <h2>1. Who We Are</h2>
 <p>DoAide AutoApply (&ldquo;we&rdquo;, &ldquo;us&rdquo;, &ldquo;our&rdquo;) is an AI-powered job-application automation service available at <strong>job.doaide.com</strong>. This policy explains how we collect, use, and protect your personal data when you use our service.</p>
@@ -38,7 +40,7 @@
 <p>When you sign up and use DoAide AutoApply, we may collect the following:</p>
 <ul>
   <li><strong>Account information:</strong> your name, email address, and Google account identifier used to sign in.</li>
-  <li><strong>Gmail data:</strong> we request access to your Gmail account (via Google OAuth) to send application emails on your behalf and to read replies from recruiters. We access only the specific email threads related to your job applications.</li>
+  <li><strong>Gmail data:</strong> when you connect a mailbox through Google OAuth, we receive its email address, Google account identifier, authorization tokens, and granted permissions. We request <code>gmail.send</code> to send messages and <code>gmail.readonly</code> to read messages. We access message and thread identifiers, sender and recipient addresses, subjects, timestamps, message bodies, and attachments needed for job correspondence. Background mailbox searches may inspect messages outside existing application threads to identify inbound recruiter opportunities; access is not technically restricted to known recruiters.</li>
   <li><strong>Resume and profile data:</strong> resumes, cover letters, professional profiles, and job preferences you upload or provide.</li>
   <li><strong>Job application data:</strong> records of jobs you apply to, application status, recruiter responses, and follow-up correspondence.</li>
   <li><strong>Usage data:</strong> feature usage, page views, and interactions within the application for service improvement.</li>
@@ -46,25 +48,26 @@
 
 <h2>3. How We Use Your Data</h2>
 <ul>
-  <li><strong>Automated job applications:</strong> we use your Gmail access to send tailored application emails and read recruiter responses so we can track and manage your applications.</li>
-  <li><strong>AI-powered tailoring:</strong> your resume and profile data are processed by AI models to generate customized cover letters and application materials for each job posting.</li>
+  <li><strong>Job correspondence:</strong> we send application emails, follow-ups, and replies; identify inbound recruiter messages; classify responses; and display correspondence and attachments in your application inbox. Depending on the automation settings you enable, messages may be sent automatically rather than individually approved. You can pause automation or disconnect a mailbox. Read-only access does not let us delete messages, change labels, or change their read/unread state.</li>
+  <li><strong>AI assistance:</strong> resume, profile, and job-posting information is processed to generate application materials. External AI email assistance is optional and off until you affirmatively opt in under Email AI privacy in Setup. For email classification, outreach, follow-ups, and reply drafting, selected sender/recruiter information, subjects, message-body excerpts, and relevant profile or resume context may then be processed by eligible AI endpoints. You can withdraw consent in the same place. Without current consent or an eligible endpoint, local rules and templates are used.</li>
   <li><strong>Application management:</strong> we store application records to provide you with a dashboard showing statuses, responses, and follow-up actions.</li>
   <li><strong>Service improvement:</strong> aggregated, de-identified usage data helps us improve features and fix issues.</li>
 </ul>
 
 <h2>4. Gmail API — Limited Use Disclosure</h2>
-<p>Our use of information received from Google APIs adheres to the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. Specifically:</p>
+<p>The use of raw or derived information received from Google Workspace APIs will adhere to the <a href="https://developers.google.com/terms/api-services-user-data-policy" rel="noopener">Google API Services User Data Policy</a>, including the Limited Use requirements. This commitment is not a statement that Google has verified or approved the application:</p>
 <ul>
-  <li>We only access Gmail data necessary to send application emails and read recruiter replies on your behalf.</li>
+  <li>Gmail access is used for the job-correspondence, inbox, classification, and reply features described above, not unrelated profiling.</li>
   <li>We do not use Gmail data for advertising purposes.</li>
   <li>We do not allow humans to read your email content unless you give explicit consent, it is necessary for security purposes, or it is required by law.</li>
-  <li>We do not transfer Gmail data to third parties except as necessary to provide or improve the service, for security purposes, or as required by law.</li>
+  <li>Transfers of Gmail data for user-facing features require your consent. Other permitted transfers are limited to security purposes, legal requirements, or a business transfer with your explicit prior consent. These restrictions also apply to data derived from Gmail.</li>
 </ul>
 
 <h2>5. Data Sharing</h2>
 <p>We do not sell your personal data. We may share data only in these limited circumstances:</p>
 <ul>
-  <li><strong>AI service providers:</strong> resume and job-posting content is sent to large-language-model providers to generate application materials. No Gmail content or credentials are shared with these providers.</li>
+  <li><strong>AI service providers:</strong> Gmail email assistance uses Groq inference with verified zero-retention settings, or OpenRouter and its eligible model providers, only after updated, recorded consent. Groq requests use only its standard chat-completions endpoint and approved base models, not batch, file storage, fine-tuning, LoRA, or built-in external tools. An operator's zero-retention verification is bound to the exact API key and expires after 30 days; changed keys, endpoints, or unapproved models block this route. Groq inference zero-retention disables storage of inputs and outputs for reliability and abuse monitoring; non-content usage metadata remains. OpenRouter requests require <code>data_collection: deny</code> and <code>zdr: true</code> routing. Neither route is used to train generalized AI models. Direct Gemini and Cerebras fallback remains prohibited for Gmail data. If no eligible provider is available, processing remains local. Gmail OAuth credentials are never in AI prompts. OpenRouter retains operational request metadata and permits temporary in-memory prompt caching, so zero retention is not a promise that no data is ever held during processing. Separate non-email features can use configured AI APIs for the resume, profile, or job-posting information you provide; email processing is isolated from that fallback chain.</li>
+  <li><strong>Infrastructure and delivery:</strong> application data is stored on our hosted servers and database. Google processes OAuth authorization and Gmail API requests. When we send an email you authorize, its recipients receive the message and any attachments.</li>
   <li><strong>Legal requirements:</strong> when required by law, regulation, or legal process.</li>
   <li><strong>With your consent:</strong> for any other purpose, only with your explicit permission.</li>
 </ul>
@@ -72,12 +75,14 @@
 <h2>6. Data Retention</h2>
 <ul>
   <li>Your account data and application records are retained for as long as your account is active.</li>
-  <li>When you delete your account, we delete your personal data, including stored resumes, application history, and Gmail tokens, within 30 days.</li>
+  <li>Account deletion removes your user-linked records from the live database, including resumes, application history, stored correspondence, and encrypted Gmail tokens. The deletion process also attempts to remove associated uploaded resume files and application screenshots and revoke Google authorization.</li>
+  <li>Disconnecting a mailbox removes its stored credentials and attempts to revoke its authorization; it does not delete application history or messages already sent to recipients. You can also revoke access directly in your Google Account.</li>
+  <li>Managed AutoApply database backups are encrypted and retained for up to 30 days, with expired copies removed by the daily backup job. Historical AutoApply code and database backups converted to encrypted archives on October 14, 2026 are also subject to that 30-day archive retention. Backups are not used for ongoing application processing. Contact us to review backup copies or any file-deletion failures. Deleting your account does not erase copies held by email recipients or external providers.</li>
   <li>De-identified, aggregated data may be retained for analytics purposes.</li>
 </ul>
 
 <h2>7. Data Security</h2>
-<p>We protect your data with encryption in transit (TLS) and at rest, access controls, and regular security reviews. Gmail OAuth tokens are stored encrypted and are never exposed to any third party.</p>
+<p>Public application traffic uses HTTPS. AutoApply's database, Redis queues, uploaded artifacts, and scheduler state are stored on an isolated LUKS-encrypted volume. Server swap is encrypted with a fresh key at each boot. Managed AutoApply backups are separately encrypted and restore-tested. Stored Gmail OAuth tokens additionally use Fernet encryption and are decrypted on the backend only when needed to call Google's services. Application services require the encrypted storage to be mounted and do not fall back to plaintext data storage. Unlock keys are restricted to the server administrator, with a protected recovery copy off-server; this is not hardware-backed key management and does not protect against a compromised administrator or a running-server compromise. The operating-system volume and historical system logs are not covered by this application-storage encryption. We suppress OAuth callback access logs and avoid logging OAuth provider response bodies. No system can guarantee absolute security.</p>
 
 <h2>8. Your Rights</h2>
 <p>You have the right to:</p>
@@ -89,11 +94,11 @@
   <li><strong>Export</strong> your application data.</li>
 </ul>
 
-<h2>9. Cookies</h2>
-<p>We use essential cookies for authentication and session management. We do not use third-party tracking or advertising cookies.</p>
+<h2>9. Browser Storage</h2>
+<p>The application uses browser local storage for its sign-in session token. Google may use its own cookies during authorization on Google pages. We do not use Gmail data for advertising or advertising-cookie targeting.</p>
 
 <h2>10. Changes to This Policy</h2>
-<p>We may update this policy from time to time. Material changes will be communicated via email or an in-app notice. Continued use of the service after changes constitutes acceptance of the updated policy.</p>
+<p>We may update this policy from time to time and identify the revision date above. For new access to or new uses of Google user data beyond what you previously authorized, we must notify you and obtain your consent before that access or use. Continued use alone is not consent to a new Google-data use.</p>
 
 <h2>11. Contact Us</h2>
 <p>If you have questions about this privacy policy or your data, contact us at:</p>
