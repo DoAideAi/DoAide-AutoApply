@@ -109,6 +109,9 @@ FEATURES: tuple[Feature, ...] = (
     Feature("cover_letter.deleted", SMART_APPLY, "Cover letter discarded"),
     Feature("fit.scored", SMART_APPLY, "Fit score run"),
     Feature("fit.breakdown_viewed", SMART_APPLY, "Score breakdown opened", client=True),
+    # Direct Apply: a posting the candidate found, imported by URL.
+    Feature("direct_apply.imported", SMART_APPLY, "Job imported by URL"),
+    Feature("direct_apply.applied", SMART_APPLY, "Imported job marked applied"),
     # ---- Profile ---------------------------------------------------------
     Feature("profile.created", PROFILE, "Profile created"),
     Feature("profile.updated", PROFILE, "Profile updated"),

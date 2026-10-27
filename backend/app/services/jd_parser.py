@@ -597,8 +597,29 @@ class JobFetchError(RuntimeError):
     """Raised when a job URL could not be turned into usable text."""
 
 
+@dataclass
+class FetchedPage:
+    """A fetched posting: its readable text, plus the markup it came from.
+
+    ``html`` and ``final_url`` (after redirects) are for callers that need more
+    than the prose — Direct Apply looks through the markup for the link to the
+    application form, which the text extraction below deliberately throws away.
+    """
+
+    text: str
+    title: str | None
+    html: str
+    final_url: str
+
+
 def fetch_job_text(url: str, *, timeout: float | None = None) -> tuple[str, str | None]:
-    """Fetch a posting URL and return ``(text, page_title)``.
+    """Fetch a posting URL and return ``(text, page_title)``."""
+    page = fetch_job_page(url, timeout=timeout)
+    return page.text, page.title
+
+
+def fetch_job_page(url: str, *, timeout: float | None = None) -> FetchedPage:
+    """Fetch a posting URL and return its text, title and markup.
 
     Best-effort by design: postings behind a login or rendered entirely in JS
     yield little or nothing, and the caller falls back to pasted text. Raises
@@ -633,7 +654,8 @@ def fetch_job_text(url: str, *, timeout: float | None = None) -> tuple[str, str 
     except requests.RequestException as exc:
         raise JobFetchError(f"Could not fetch the job posting: {exc}") from exc
 
-    soup = BeautifulSoup(outbound.page_text(resp), "html.parser")
+    html = outbound.page_text(resp)
+    soup = BeautifulSoup(html, "html.parser")
     for tag in soup(list(_STRIP_TAGS)):
         tag.decompose()
 
@@ -647,7 +669,12 @@ def fetch_job_text(url: str, *, timeout: float | None = None) -> tuple[str, str 
             "That page didn't return readable job text — it may need a login or "
             "render with JavaScript. Paste the description instead."
         )
-    return text[:20000], page_title
+    return FetchedPage(
+        text=text[:20000],
+        title=page_title,
+        html=html,
+        final_url=getattr(resp, "url", None) or url,
+    )
 
 
 # --------------------------------------------------------------------------- #
@@ -1370,12 +1397,16 @@ def _merge_llm(base: ParsedJob, data: dict[str, Any]) -> ParsedJob:
     return merged
 
 
-def enrich_with_llm(text: str, base: ParsedJob) -> ParsedJob:
-    """Ask a free model on the provider chain to sharpen the heuristic parse."""
-    if not llm_is_configured():
+def enrich_with_llm(text: str, base: ParsedJob, *, complete=None) -> ParsedJob:
+    """Ask a free model on the provider chain to sharpen the heuristic parse.
+
+    *complete* stands in for ``chat_completion`` when a caller wants a
+    particular provider first; it must raise ``OpenRouterError`` on failure.
+    """
+    if complete is None and not llm_is_configured():
         return base
     try:
-        raw = chat_completion(
+        raw = (complete or chat_completion)(
             [
                 {"role": "system", "content": untrusted.guarded(_LLM_SYSTEM_PROMPT)},
                 {
@@ -1401,13 +1432,13 @@ def enrich_with_llm(text: str, base: ParsedJob) -> ParsedJob:
 
 
 def parse_job(
-    text: str, *, page_title: str | None = None, use_llm: bool = True
+    text: str, *, page_title: str | None = None, use_llm: bool = True, complete=None
 ) -> ParsedJob:
     """Parse a job description; heuristics always run, the LLM only refines."""
     base = parse_heuristic(text, page_title)
     if not use_llm:
         return base
-    return enrich_with_llm(text, base)
+    return enrich_with_llm(text, base, complete=complete)
 
 
 def parse_job_input(
@@ -1428,9 +1459,11 @@ def parse_job_input(
 
 
 __all__ = [
+    "FetchedPage",
     "JobFetchError",
     "ParsedJob",
     "extract_keywords",
+    "fetch_job_page",
     "fetch_job_text",
     "jd_hash",
     "parse_heuristic",

@@ -25,6 +25,7 @@ from app.routers import (
     campaigns,
     dashboard,
     digest,
+    direct_apply,
     follow_ups,
     form_apply,
     gmail,
@@ -188,6 +189,7 @@ def create_app() -> FastAPI:
     app.include_router(recruiters.router, prefix=prefix)
     app.include_router(tracker.router, prefix=prefix)
     app.include_router(smart_apply.router, prefix=prefix)
+    app.include_router(direct_apply.router, prefix=prefix)
     app.include_router(jobs.router, prefix=prefix)
     app.include_router(form_apply.router, prefix=prefix)
     app.include_router(linkedin.router, prefix=prefix)

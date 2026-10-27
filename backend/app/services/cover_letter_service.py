@@ -314,12 +314,17 @@ def _clean_highlights(value: Any, limit: int = 4) -> list[dict[str, Any]]:
 
 
 def generate_letter(
-    resume: Resume, job: ParsedJob, *, profile=None
+    resume: Resume, job: ParsedJob, *, profile=None, complete=None
 ) -> LetterOutput:
     """Write one letter for one posting.
 
     Always returns something usable. The model is asked first, and its output is
     kept only if it stays inside the resume and the verified company facts.
+
+    *complete* replaces the provider chain's ``chat_completion`` — same
+    signature, same ``OpenRouterError`` on failure — for a caller that wants a
+    particular provider first (Direct Apply asks Gemini). The grounding checks
+    below apply to whatever it returns.
     """
     matched, missing = match_keywords(resume, job)
     highlights = highlight_experience(resume, job)
@@ -341,11 +346,11 @@ def generate_letter(
         ],
     )
 
-    if not llm_is_configured():
+    if complete is None and not llm_is_configured():
         return output
 
     try:
-        raw = chat_completion(
+        raw = (complete or chat_completion)(
             [
                 {"role": "system", "content": untrusted.guarded(_SYSTEM_PROMPT)},
                 {
@@ -414,6 +419,7 @@ def upsert_letter(
     profile=None,
     delivery: str = DELIVERY_INLINE,
     force: bool = False,
+    complete=None,
 ) -> CoverLetter:
     """Generate (or regenerate) the letter for a posting and store it.
 
@@ -431,7 +437,7 @@ def upsert_letter(
         logger.info("cover letter %s left alone: edited by the user", existing.id)
         return existing
 
-    output = generate_letter(resume, job, profile=profile)
+    output = generate_letter(resume, job, profile=profile, complete=complete)
 
     letter = existing or CoverLetter(user_id=user_id)
     letter.resume_id = resume.id

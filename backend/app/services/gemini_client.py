@@ -5,6 +5,11 @@ user data — resumes, recruiter mail, Gmail content — under consent and provi
 rules; the public tools carry only what a stranger typed into a form, and they
 should neither spend the product's main LLM budget nor share its failure modes.
 
+Direct Apply (:mod:`app.services.direct_apply_service`) also calls it, Gemini
+first, for the posting parse and the cover letter. What it sends is the
+candidate's resume and a public job posting — never mail — so the reason above
+for keeping mailbox content on the router does not apply to it.
+
 The key is read from ``GEMINI_API_KEY`` at call time, so a deployment without it
 simply reports :class:`GeminiUnavailable` and the caller degrades (the cover
 letter page falls back to its template) rather than failing to start.
@@ -42,25 +47,32 @@ def generate(
     # they write; a tight cap truncates the answer, not the thought.
     max_output_tokens: int = 4096,
     timeout: float = 25.0,
+    thinking_level: str | None = None,
 ) -> str:
     key = os.environ.get("GEMINI_API_KEY", "").strip()
     if not key:
         raise GeminiUnavailable("GEMINI_API_KEY is not set")
 
+    config: dict = {"temperature": temperature, "maxOutputTokens": max_output_tokens}
+    if thinking_level:
+        # "low" roughly halves latency on the flash models for extraction and
+        # short prose, where long deliberation buys nothing.
+        config["thinkingConfig"] = {"thinkingLevel": thinking_level}
     body = {
         "systemInstruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": prompt}]}],
-        "generationConfig": {"temperature": temperature, "maxOutputTokens": max_output_tokens},
+        "generationConfig": config,
     }
     last = "no model tried"
     for model in MODELS:
         try:
-            resp = httpx.post(
-                API_URL.format(model=model),
-                headers={"x-goog-api-key": key},
-                json=body,
-                timeout=timeout,
-            )
+            resp = _post(model, key, body, timeout)
+            if resp.status_code == 400 and thinking_level:
+                # A model that does not take the thinking setting is still a
+                # model that can answer; ask it again without.
+                plain_config = {k: v for k, v in config.items() if k != "thinkingConfig"}
+                plain = {**body, "generationConfig": plain_config}
+                resp = _post(model, key, plain, timeout)
         except httpx.HTTPError as exc:
             last = f"{model}: {type(exc).__name__}"
             continue
@@ -74,6 +86,15 @@ def generate(
         last = f"{model}: empty completion"
     logger.warning("gemini: every model failed (%s)", last)
     raise GeminiUnavailable(last)
+
+
+def _post(model: str, key: str, body: dict, timeout: float) -> httpx.Response:
+    return httpx.post(
+        API_URL.format(model=model),
+        headers={"x-goog-api-key": key},
+        json=body,
+        timeout=timeout,
+    )
 
 
 def _text_of(resp: httpx.Response) -> str:
